@@ -1,0 +1,76 @@
+{
+  "name": "explicaai",
+  "version": "1.0.0",
+  "description": "Assistente de matemática offline com IA + OCR especializado - Gemma 3n Impact Challenge",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "node test.js",
+    "setup": "npm install && mkdir -p uploads public",
+    "check-ollama": "curl -s http://localhost:11434 || echo 'Ollama não está rodando. Execute: ollama serve'"
+  },
+  "keywords": [
+    "ai",
+    "education",
+    "mathematics", 
+    "offline",
+    "gemma",
+    "ollama",
+    "hackathon",
+    "social-impact"
+  ],
+  "author": {
+    "name": "Francisco Samir",
+    "email": "fscpinheiro@gmail.com",
+    "url": "https://github.com/fscpinheiro"
+  },
+  "contributors": [
+    {
+      "name": "ExplicaAI Team",
+      "url": "https://github.com/explicaai/team"
+    }
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/explicaai/explicaai-backend"
+  },
+  "bugs": {
+    "url": "https://github.com/explicaai/explicaai-backend/issues"
+  },
+  "homepage": "https://explicaai.github.io",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.2",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "config": {
+    "port": 3000,
+    "ollama_url": "http://localhost:11434",
+    "model": "gemma3n:e4b"
+  },
+  "funding": {
+    "type": "hackathon",
+    "url": "https://www.kaggle.com/competitions/gemma-3n-impact-challenge"
+  },
+  "files": [
+    "app.js",
+    "public/",
+    "README.md",
+    "LICENSE"
+  ],
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  }
+}

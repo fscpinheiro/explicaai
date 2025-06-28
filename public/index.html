@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExplicaAI - Assistente de Matemática</title>
+    <!-- Tesseract.js para OCR offline -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #4facfe;
+            border-bottom: 2px solid #4facfe;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input:hover {
+            border-color: #4facfe;
+            background: #f8f9ff;
+        }
+
+        .file-input input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .result h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .result p {
+            line-height: 1.6;
+            color: #555;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffe6e6;
+            border-left: 4px solid #ff4444;
+            color: #cc0000;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .status.online {
+            color: #22c55e;
+        }
+
+        .status.offline {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧮 ExplicaAI</h1>
+            <p>Seu assistente de matemática offline com IA</p>
+            <div class="status" id="status">Verificando conexão...</div>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('text')">📝 Digitar Problema</button>
+                <button class="tab" onclick="showTab('image')">📷 Enviar Foto</button>
+                <button class="tab" onclick="showTab('similar')">🎯 Gerar Similares</button>
+            </div>
+
+            <!-- Tab: Texto -->
+            <div class="tab-content active" id="text-tab">
+                <div class="input-group">
+                    <label for="problem-text">Digite seu problema de matemática:</label>
+                    <textarea 
+                        id="problem-text" 
+                        placeholder="Ex: Resolva a equação 2x + 5 = 13"
+                    ></textarea>
+                </div>
+                <button class="btn" onclick="explainText()">🤖 Explicar Passo a Passo</button>
+            </div>
+
+            <!-- Tab: Imagem -->
+            <div class="tab-content" id="image-tab">
+                <div class="input-group">
+                    <label>Envie uma foto do problema:</label>
+                    <div class="file-input" onclick="document.getElementById('image-input').click()">
+                        <input type="file" id="image-input" accept="image/*" onchange="handleImageSelect()">
+                        <p id="file-input-text">📷 Clique para selecionar uma imagem</p>
+                        <small>Suporta: JPG, PNG, GIF</small>
+                    </div>
+                </div>
+                
+                <!-- Preview da imagem -->
+                <div id="image-preview" style="display: none; margin: 20px 0;">
+                    <img id="preview-img" style="max-width: 100%; max-height: 200px; border-radius: 10px;">
+                </div>
+                
+                <!-- OCR Results -->
+                <div id="ocr-results" style="display: none; margin: 20px 0;">
+                    <label>Texto detectado:</label>
+                    <textarea id="detected-text" rows="3" style="width: 100%; padding: 10px; border: 2px solid #4facfe; border-radius: 8px; font-family: monospace;"></textarea>
+                    <div style="margin-top: 10px;">
+                        <button class="btn" style="background: #22c55e; margin-right: 10px;" onclick="confirmOCR()">✅ Confirmar</button>
+                        <button class="btn" style="background: #ef4444; margin-right: 10px;" onclick="cancelOCR()">❌ Cancelar</button>
+                        <small style="color: #666;">Você pode editar o texto acima antes de confirmar</small>
+                    </div>
+                </div>
+                
+                <button class="btn" id="scan-btn" onclick="scanImage()" disabled>🔍 Escanear Texto</button>
+            </div>
+
+            <!-- Tab: Similares -->
+            <div class="tab-content" id="similar-tab">
+                <div class="input-group">
+                    <label for="original-problem">Problema original:</label>
+                    <textarea 
+                        id="original-problem" 
+                        placeholder="Ex: Maria tem 5 anos a mais que João. Juntos têm 25 anos. Qual a idade de cada um?"
+                    ></textarea>
+                </div>
+                <button class="btn" onclick="generateSimilar()">🎲 Gerar Exercícios Similares</button>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processando com IA...</p>
+            </div>
+
+            <!-- Resultado -->
+            <div class="result" id="result" style="display: none;">
+                <h3>📋 Explicação:</h3>
+                <p id="result-text"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar status da API
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                document.getElementById('status').textContent = `✅ ${data.status} | Ollama: ${data.ollama}`;
+                document.getElementById('status').className = 'status online';
+            } catch (error) {
+                document.getElementById('status').textContent = '❌ Sistema Offline';
+                document.getElementById('status').className = 'status offline';
+            }
+        }
+
+        // Mostrar tab
+        function showTab(tabName) {
+            // Remover active de todas as tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Ativar tab selecionada
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // Mostrar loading
+        function showLoading(show = true) {
+            document.getElementById('loading').classList.toggle('show', show);
+            document.getElementById('result').style.display = show ? 'none' : 'block';
+        }
+
+        // Mostrar resultado
+        function showResult(text, isError = false) {
+            const resultDiv = document.getElementById('result');
+            const resultText = document.getElementById('result-text');
+            
+            resultText.textContent = text;
+            resultDiv.style.display = 'block';
+            resultDiv.className = isError ? 'result error' : 'result';
+            
+            showLoading(false);
+        }
+
+        // Explicar texto
+        async function explainText() {
+            const problem = document.getElementById('problem-text').value.trim();
+            
+            if (!problem) {
+                alert('Por favor, digite um problema de matemática.');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/explain-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ problem }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult(data.explanation);
+                } else {
+                    showResult('Erro: ' + (data.message || data.error), true);
+                }
+            } catch (error) {
+                showResult('Erro ao conectar com o servidor: ' + error.message, true);
+            }
+        }
+
+        let currentImageFile = null;
+        let currentImagePath = null;
+
+        // Handle image selection
+        function handleImageSelect() {
+            const input = document.getElementById('image-input');
+            const scanBtn = document.getElementById('scan-btn');
+            const preview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            const fileText = document.getElementById('file-input-text');
+            
+            if (input.files.length > 0) {
+                currentImageFile = input.files[0];
+                
+                // Mostrar preview da imagem
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(currentImageFile);
+                
+                scanBtn.disabled = false;
+                fileText.textContent = '✅ Imagem selecionada: ' + currentImageFile.name;
+                
+                // Esconder resultados OCR anteriores
+                document.getElementById('ocr-results').style.display = 'none';
+            }
+        }
+
+        // Escanear imagem com Tesseract.js
+        async function scanImage() {
+            if (!currentImageFile) {
+                alert('Por favor, selecione uma imagem primeiro.');
+                return;
+            }
+
+            showLoading(true);
+            document.getElementById('loading').querySelector('p').textContent = 'Escaneando texto na imagem...';
+
+            try {
+                console.log('🔍 Iniciando OCR com Tesseract.js...');
+                
+                const { data: { text, confidence } } = await Tesseract.recognize(
+                    currentImageFile,
+                    'eng+por', // Inglês e Português
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const progress = Math.round(m.progress * 100);
+                                document.getElementById('loading').querySelector('p').textContent = 
+                                    `Escaneando texto... ${progress}%`;
+                            }
+                        }
+                    }
+                );
+
+                console.log('✅ OCR concluído:', text);
+                console.log('📊 Confiança:', confidence);
+
+                // Limpar e formatar texto detectado
+                const cleanText = text
+                    .replace(/\s+/g, ' ')
+                    .replace(/[^\w\s+\-=()^²³.\/]/g, '')
+                    .trim();
+
+                // Mostrar resultados do OCR
+                document.getElementById('detected-text').value = cleanText;
+                document.getElementById('ocr-results').style.display = 'block';
+                showLoading(false);
+
+                if (confidence < 0.5) {
+                    alert('⚠️ Confiança baixa na detecção. Verifique se o texto está correto.');
+                }
+
+            } catch (error) {
+                console.error('❌ Erro no OCR:', error);
+                showResult('Erro ao escanear imagem: ' + error.message, true);
+            }
+        }
+
+        // Confirmar texto detectado e explicar
+        async function confirmOCR() {
+            const confirmedText = document.getElementById('detected-text').value.trim();
+            
+            if (!confirmedText) {
+                alert('Por favor, digite ou corrija o texto detectado.');
+                return;
+            }
+
+            showLoading(true);
+            document.getElementById('loading').querySelector('p').textContent = 'Explicando problema...';
+
+            try {
+                const response = await fetch('/api/explain-confirmed', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        confirmedText: confirmedText,
+                        originalImage: currentImagePath 
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult(data.explanation);
+                    // Esconder OCR results após confirmação
+                    document.getElementById('ocr-results').style.display = 'none';
+                } else {
+                    showResult('Erro: ' + (data.message || data.error), true);
+                }
+            } catch (error) {
+                showResult('Erro ao conectar com o servidor: ' + error.message, true);
+            }
+        }
+
+        // Cancelar OCR
+        function cancelOCR() {
+            document.getElementById('ocr-results').style.display = 'none';
+            document.getElementById('detected-text').value = '';
+        }
+
+        // Gerar exercícios similares
+        async function generateSimilar() {
+            const originalProblem = document.getElementById('original-problem').value.trim();
+            
+            if (!originalProblem) {
+                alert('Por favor, digite um problema original.');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/generate-similar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ originalProblem }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult(data.similarProblems);
+                } else {
+                    showResult('Erro: ' + (data.message || data.error), true);
+                }
+            } catch (error) {
+                showResult('Erro ao conectar com o servidor: ' + error.message, true);
+            }
+        }
+
+        // Verificar status ao carregar
+        checkStatus();
+        setInterval(checkStatus, 30000); // Verificar a cada 30 segundos
+    </script>
+</body>
+</html>
