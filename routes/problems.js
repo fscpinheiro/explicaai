@@ -4,7 +4,8 @@
 const express = require('express');
 const router = express.Router();
 
-const { asyncHandler, validateInput, checkDatabaseConnection } = require('../middleware/errorHandler');
+//const { asyncHandler, validateInput, checkDatabaseConnection } = require('../middleware/errorHandler');
+const { asyncHandler, validateInput, checkDatabaseConnection } = require('../middleware/errorHandle');
 const { successResponse, errorResponse, validateProblemText, validateIdArray } = require('../utils/helpers');
 
 // Middleware para todas as rotas de problemas
@@ -386,6 +387,255 @@ router.get('/search/advanced', asyncHandler(async (req, res) => {
     },
     count: problems.length
   }));
+}));
+
+/**
+ * POST /api/problems/explain-text
+ * Explicar problema, salvar automaticamente com resposta
+ */
+router.post('/explain-text', 
+  validateInput({
+    required: ['text'],
+    maxLength: { text: 1000 }
+  }),
+  asyncHandler(async (req, res) => {
+    const { text, type = 'detailed', collectionIds } = req.body;
+
+    // Validar texto
+    const textValidation = validateProblemText(text);
+    if (!textValidation.valid) {
+      return res.status(400).json(errorResponse(textValidation.error, null, 400));
+    }
+
+    try {
+      // Verificar se Ollama está rodando
+      const ollamaService = require('../services/ollamaService');
+      const ollamaStatus = await ollamaService.checkStatus();
+      if (!ollamaStatus) {
+        return res.status(503).json(errorResponse(
+          'Ollama offline',
+          'Execute: ollama serve',
+          503
+        ));
+      }
+
+      // Auto-categorização
+      const categorizationService = require('../services/categorizationService');
+      
+      const analysis = categorizationService.analyzeComplete(textValidation.text);
+
+      // Explicar com Gemma (dois tipos)
+      let explanation;
+      if (type === 'brief') {
+        explanation = await ollamaService.explainMathBrief(textValidation.text);
+      } else {
+        explanation = await ollamaService.explainMath(textValidation.text);
+      }
+
+      // Definir coleções (auto-sugestão se não especificado)
+      let finalCollectionIds = collectionIds || [];
+      if (finalCollectionIds.length === 0) {
+        // Buscar coleção sugerida pela auto-categorização
+        const suggestedCollection = await req.db.get(
+          "SELECT id FROM collections WHERE name = ?",
+          [analysis.suggestedCollection]
+        );
+        if (suggestedCollection) {
+          finalCollectionIds = [suggestedCollection.id];
+        } else {
+          // Fallback para Favoritos
+          const favoriteCollection = await req.db.get(
+            "SELECT id FROM collections WHERE name = 'Favoritos'"
+          );
+          finalCollectionIds = favoriteCollection ? [favoriteCollection.id] : [];
+        }
+      }
+
+      // Salvar problema com explicação
+      const problemData = {
+        text: textValidation.text,
+        explanation: explanation.response,
+        source: 'text',
+        difficulty: analysis.difficulty,
+        solvedTime: explanation.elapsedTime,
+        tags: analysis.tags,
+        collectionIds: finalCollectionIds
+      };
+
+      const savedProblem = await req.db.Problem.create(problemData);
+
+      console.log(`✅ Problema explicado e salvo: ID ${savedProblem.id}`);
+
+      res.json(successResponse({
+        problem: savedProblem,
+        explanation: explanation.response,
+        analysisType: type,
+        processingTime: explanation.elapsedTime,
+        autoCategory: {
+          suggested: analysis.suggestedCollection,
+          confidence: analysis.confidence,
+          difficulty: analysis.difficulty,
+          tags: analysis.tags
+        }
+      }, `Problema ${type === 'brief' ? 'resumido' : 'explicado passo a passo'} e salvo!`));
+
+    } catch (error) {
+      console.error('❌ Erro ao explicar problema:', error.message);
+      res.status(500).json(errorResponse(
+        'Erro ao processar problema',
+        error.message,
+        500
+      ));
+    }
+  })
+);
+
+/**
+ * POST /api/problems/generate-similar
+ * Gerar problemas similares baseado em um texto
+ */
+router.post('/generate-similar',
+  validateInput({
+    required: ['text'],
+    maxLength: { text: 1000 }
+  }),
+  asyncHandler(async (req, res) => {
+    const { text } = req.body;
+
+    // Validar texto
+    const textValidation = validateProblemText(text);
+    if (!textValidation.valid) {
+      return res.status(400).json(errorResponse(textValidation.error, null, 400));
+    }
+
+    try {
+      // Verificar se Ollama está rodando
+      const ollamaService = require('../services/ollamaService');
+      const ollamaStatus = await ollamaService.checkStatus();
+      if (!ollamaStatus) {
+        return res.status(503).json(errorResponse(
+          'Ollama offline',
+          'Execute: ollama serve',
+          503
+        ));
+      }
+
+      // Gerar similares com Gemma
+      const result = await ollamaService.generateSimilar(textValidation.text);
+
+      // Log da ação
+      await req.db.run(
+        'INSERT INTO history_log (action, problem_id, details) VALUES (?, ?, ?)',
+        ['generate_similar', null, JSON.stringify({ 
+          originalText: textValidation.text,
+          processingTime: result.elapsedTime 
+        })]
+      );
+
+      console.log(`🎯 Problemas similares gerados para: "${textValidation.text.substring(0, 50)}..."`);
+
+      res.json(successResponse({
+        originalProblem: textValidation.text,
+        similarProblems: result.response,
+        processingTime: result.elapsedTime,
+        count: 3 // Assumindo que o Gemma retorna 3 exercícios
+      }, 'Problemas similares gerados com sucesso!'));
+
+    } catch (error) {
+      console.error('❌ Erro ao gerar similares:', error.message);
+      res.status(500).json(errorResponse(
+        'Erro ao gerar problemas similares',
+        error.message,
+        500
+      ));
+    }
+  })
+);
+
+/**
+ * GET /api/problems/history
+ * Histórico de problemas com data/hora
+ */
+router.get('/history', asyncHandler(async (req, res) => {
+  const { 
+    limit = 20, 
+    page = 1,
+    type = 'all' // 'all', 'solved', 'similar_generated'
+  } = req.query;
+
+  try {
+    let sql = `
+      SELECT 
+        p.id,
+        p.text,
+        p.created_at,
+        p.source,
+        p.difficulty_level,
+        p.is_favorite,
+        GROUP_CONCAT(c.name) as collection_names,
+        GROUP_CONCAT(c.icon) as collection_icons
+      FROM problems p
+      LEFT JOIN problem_collections pc ON p.id = pc.problem_id
+      LEFT JOIN collections c ON pc.collection_id = c.id
+    `;
+
+    const conditions = [];
+    const params = [];
+
+    if (type === 'solved') {
+      conditions.push("p.explanation IS NOT NULL");
+    }
+
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    sql += ` 
+      GROUP BY p.id 
+      ORDER BY p.created_at DESC 
+      LIMIT ? OFFSET ?
+    `;
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    params.push(parseInt(limit), offset);
+
+    const problems = await req.db.all(sql, params);
+
+    // Buscar também ações do histórico
+    const historyActions = await req.db.all(`
+      SELECT 
+        action,
+        created_at,
+        details
+      FROM history_log
+      WHERE action IN ('create', 'generate_similar')
+      ORDER BY created_at DESC
+      LIMIT ?
+    `, [parseInt(limit)]);
+
+    res.json(successResponse({
+      problems: problems.map(p => ({
+        ...p,
+        collections: p.collection_names ? p.collection_names.split(',') : [],
+        collection_icons: p.collection_icons ? p.collection_icons.split(',') : [],
+        is_favorite: !!p.is_favorite
+      })),
+      history: historyActions,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: problems.length
+      }
+    }));
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar histórico:', error.message);
+    res.status(500).json(errorResponse(
+      'Erro ao buscar histórico',
+      error.message,
+      500
+    ));
+  }
 }));
 
 module.exports = router;

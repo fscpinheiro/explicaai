@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { asyncHandler, validateInput, checkDatabaseConnection } = require('../middleware/errorHandler');
+const { asyncHandler, validateInput, checkDatabaseConnection } = require('../middleware/errorHandle');
 const { successResponse, errorResponse, generateRandomColor, generateRandomIcon } = require('../utils/helpers');
 
 // Middleware para todas as rotas de coleções

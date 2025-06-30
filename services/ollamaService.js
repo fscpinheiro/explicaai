@@ -99,30 +99,6 @@ class OllamaService {
   }
 
   /**
-   * Explicar problema matemático
-   */
-  async explainMath(problem) {
-    const prompt = this.createMathPrompt(problem);
-    const result = await this.generate(prompt);
-    
-    console.log(`🧮 Problema resolvido: "${truncateText(problem)}" em ${result.elapsedTime}s`);
-    
-    return result;
-  }
-
-  /**
-   * Gerar exercícios similares
-   */
-  async generateSimilar(originalProblem) {
-    const prompt = this.createSimilarPrompt(originalProblem);
-    const result = await this.generate(prompt);
-    
-    console.log(`🎯 Exercícios similares gerados para: "${truncateText(originalProblem)}" em ${result.elapsedTime}s`);
-    
-    return result;
-  }
-
-  /**
    * Analisar imagem com problema matemático
    */
   async analyzeImage(imagePath) {
@@ -286,6 +262,56 @@ Use linguagem clara e didática para estudantes.`;
       console.error('❌ Erro ao listar modelos:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Explicar problema matemático - VERSÃO RESUMIDA
+   */
+  async explainMathBrief(problem) {
+    const prompt = this.createMathBriefPrompt(problem);
+    const result = await this.generate(prompt);
+    
+    console.log(`📝 Problema resumido: "${truncateText(problem)}" em ${result.elapsedTime}s`);
+    
+    return result;
+  }
+
+  /**
+   * Explicar problema matemático - VERSÃO DETALHADA
+   */
+  async explainMath(problem) {
+    const prompt = this.createMathPrompt(problem);
+    const result = await this.generate(prompt);
+    
+    console.log(`📝 Problema detalhado: "${this.truncateText ? this.truncateText(problem) : problem.substring(0, 50)}..." em ${result.elapsedTime}s`);
+    
+    return result;
+  }
+
+  /**
+   * Criar prompt para explicação RESUMIDA
+   */
+  createMathBriefPrompt(problem) {
+    return `Você é um professor de matemática. Resolva este problema de forma RESUMIDA e DIRETA:
+
+"${problem}"
+
+FORMATO DA RESPOSTA (MÁXIMO 3 PARÁGRAFOS):
+
+**Tipo:** [Identifique rapidamente o tipo de problema]
+
+**Solução:** [Resolva de forma direta, sem muitos detalhes]
+
+**Resposta:** [Destaque a resposta final claramente]
+
+Seja conciso, direto e didático. Foque na solução prática.`;
+  }
+
+  /**
+   * Criar prompt MELHORADO para explicação detalhada
+   */
+  createMathPrompt(problem) {
+    return `Resolva este problema de matemática passo a passo: ${problem}`;
   }
 }
 
