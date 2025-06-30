@@ -69,6 +69,15 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
     }
   }
 
+  // ✅ NOVA FUNÇÃO PARA TOGGLE DO SIDEBAR
+  const handleToggleSidebar = () => {
+    console.log('❤️ Toggle sidebar - Estado atual:', showSidebar)
+    setShowSidebar(prev => {
+      console.log('❤️ Novo estado do sidebar:', !prev)
+      return !prev
+    })
+  }
+
   const colorOptions = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
     '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
@@ -101,14 +110,15 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
               </div>
               
               <div className="flex items-center gap-2">
+                {/* ✅ BOTÃO CORRIGIDO COM FUNÇÃO ESPECÍFICA */}
                 <button 
-                  onClick={() => setShowSidebar(!showSidebar)}
+                  onClick={handleToggleSidebar}
                   className={`p-2 rounded-lg transition-colors duration-200 ${
                     showSidebar
-                      ? 'text-red-500 bg-red-50'
-                      : 'text-gray-600 hover:text-red-500 hover:bg-red-50'
+                      ? 'text-red-500 bg-red-50 border-2 border-red-200'
+                      : 'text-gray-600 hover:text-red-500 hover:bg-red-50 border-2 border-transparent'
                   }`}
-                  title="Coleções"
+                  title={showSidebar ? 'Fechar Coleções' : 'Abrir Coleções'}
                 >
                   <Heart className="w-5 h-5" />
                 </button>
@@ -117,15 +127,15 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                   onClick={onToggleHistory}
                   className={`p-2 rounded-lg transition-colors duration-200 ${
                     showHistory
-                      ? 'text-blue-500 bg-blue-50'
-                      : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50'
+                      ? 'text-blue-500 bg-blue-50 border-2 border-blue-200'
+                      : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50 border-2 border-transparent'
                   }`}
-                  title="Histórico"
+                  title={showHistory ? 'Fechar Histórico' : 'Abrir Histórico'}
                 >
                   <History className="w-5 h-5" />
                 </button>
                 
-                <button className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                <button className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200 border-2 border-transparent">
                   <Settings className="w-5 h-5" />
                 </button>
               </div>
@@ -142,6 +152,7 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
         </footer>
       </div>
 
+      {/* ✅ OVERLAY MELHORADO */}
       <AnimatePresence>
         {showSidebar && (
           <motion.div
@@ -149,11 +160,15 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-50 z-40"
-            onClick={() => setShowSidebar(false)}
+            onClick={() => {
+              console.log('🔒 Overlay clicado - fechando sidebar')
+              setShowSidebar(false)
+            }}
           />
         )}
       </AnimatePresence>
 
+      {/* ✅ SIDEBAR MELHORADO */}
       <AnimatePresence>
         {showSidebar && (
           <motion.aside
@@ -163,20 +178,27 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col"
           >
-            <div className="p-4 border-b border-gray-200">
+            {/* ✅ HEADER DO SIDEBAR */}
+            <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-indigo-600">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-800">📚 Coleções</h2>
+                <h2 className="text-lg font-bold text-white">📚 Coleções ({collections.length})</h2>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    onClick={() => {
+                      console.log('➕ Abrindo modal de criação')
+                      setShowCreateModal(true)
+                    }}
+                    className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
                     title="Nova Coleção"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => setShowSidebar(false)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    onClick={() => {
+                      console.log('❌ Fechando sidebar pelo X')
+                      setShowSidebar(false)
+                    }}
+                    className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
                     title="Fechar"
                   >
                     <X className="w-5 h-5" />
@@ -185,75 +207,80 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
               </div>
             </div>
 
+            {/* ✅ LISTA DE COLEÇÕES MELHORADA */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {collections.map((collection) => {
-                const problemCount = parseInt(collection.problem_count) || 0
-                
-                return (
-                  <motion.button
-                    key={collection.id}
-                    onClick={() => {
-                      onCollectionSelect && onCollectionSelect(collection.id)
-                      setShowSidebar(false)
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full text-left p-3 rounded-xl border transition-all duration-200 ${
-                      selectedCollection === collection.id
-                        ? 'border-2 shadow-lg'
-                        : 'border border-gray-200 hover:border-gray-300 hover:shadow-md'
-                    }`}
-                    style={{
-                      borderColor: selectedCollection === collection.id ? collection.color : undefined,
-                      backgroundColor: selectedCollection === collection.id 
-                        ? `${collection.color}15` 
-                        : 'white'
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span 
-                          className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-md"
-                          style={{ backgroundColor: collection.color }}
-                        >
-                          {collection.icon || '📚'}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-800 truncate">
-                            {collection.name}
-                          </h3>
+              {collections.length > 0 ? (
+                collections.map((collection) => {
+                  const problemCount = parseInt(collection.problem_count) || 0
+                  
+                  return (
+                    <motion.button
+                      key={collection.id}
+                      onClick={() => {
+                        console.log('🖱️ Coleção selecionada:', collection.name)
+                        onCollectionSelect && onCollectionSelect(collection.id)
+                        setShowSidebar(false)
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`w-full text-left p-3 rounded-xl border transition-all duration-200 ${
+                        selectedCollection === collection.id
+                          ? 'border-2 shadow-lg bg-blue-50'
+                          : 'border border-gray-200 hover:border-gray-300 hover:shadow-md bg-white'
+                      }`}
+                      style={{
+                        borderColor: selectedCollection === collection.id ? collection.color : undefined
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span 
+                            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-md"
+                            style={{ backgroundColor: collection.color }}
+                          >
+                            {collection.icon || '📚'}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-800 truncate">
+                              {collection.name}
+                            </h3>
+                            {collection.description && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {collection.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end gap-1">
+                          <span 
+                            className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-bold rounded-full text-white shadow-sm"
+                            style={{ 
+                              backgroundColor: collection.color,
+                              color: 'white'
+                            }}
+                          >
+                            {problemCount}
+                          </span>
+                          
+                          {collection.is_system === 1 && (
+                            <div className="text-xs text-gray-400">Sistema</div>
+                          )}
                         </div>
                       </div>
-                      
-                      {/* ✅ ÁREA DIREITA COMPLETAMENTE REESTRUTURADA - SEM 0 EXTRA! */}
-                      <div className="flex flex-col items-end gap-1">
-                        <span 
-                          className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-bold rounded-full text-white shadow-sm"
-                          style={{ 
-                            backgroundColor: collection.color,
-                            color: 'white'
-                          }}
-                        >
-                          {problemCount}
-                        </span>
-                        
-                        {collection.is_system === 1 && (
-                          <div className="text-xs text-gray-400">Sistema</div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.button>
-                )
-              })}
-
-              {collections.length === 0 && (
+                    </motion.button>
+                  )
+                })
+              ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <p className="mb-2">Nenhuma coleção encontrada</p>
+                  <div className="mb-4 text-4xl">📚</div>
+                  <p className="text-lg font-medium mb-2">Nenhuma coleção encontrada</p>
+                  <p className="text-sm mb-4">Crie sua primeira coleção para organizar seus problemas</p>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                   >
-                    Criar primeira coleção
+                    ➕ Criar Primeira Coleção
                   </button>
                 </div>
               )}
@@ -262,6 +289,7 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
         )}
       </AnimatePresence>
 
+      {/* ✅ MODAL DE CRIAÇÃO INALTERADO */}
       <AnimatePresence>
         {showCreateModal && (
           <motion.div

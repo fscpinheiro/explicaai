@@ -9,7 +9,8 @@ function App() {
   const [history, setHistory] = useState([])
   const [selectedCollection, setSelectedCollection] = useState(null)
   const [filteredHistory, setFilteredHistory] = useState([])
-  const [showHistory, setShowHistory] = useState(false) // Controla exibição do histórico
+  const [showHistory, setShowHistory] = useState(false)
+  const [viewMode, setViewMode] = useState('input') // 'input', 'history', 'collection', 'study'
 
   // Carregar histórico de problemas ao iniciar
   useEffect(() => {
@@ -126,7 +127,8 @@ function App() {
     // Recarregar histórico para mostrar o novo problema
     await loadHistory()
     
-    // Fechar histórico se estiver aberto (focar no resultado)
+    // Mudar para modo input com resultado
+    setViewMode('input')
     setShowHistory(false)
   }
 
@@ -139,6 +141,9 @@ function App() {
       similarProblems: resultData.similarProblems,
       processingTime: resultData.processingTime
     })
+
+    setViewMode('input')
+    setShowHistory(false)
   }
 
   const handleTakePhoto = () => {
@@ -147,7 +152,25 @@ function App() {
 
   const handleCollectionSelect = (collectionId) => {
     setSelectedCollection(collectionId)
-    setResult(null) // Limpar resultado quando trocar filtro
+    setViewMode('collection')
+    setShowHistory(false)
+    setResult(null)
+    
+    // Carregar problemas da coleção específica
+    loadCollectionProblems(collectionId)
+  }
+
+  const loadCollectionProblems = async (collectionId) => {
+    try {
+      const response = await fetch(`/api/collections/${collectionId}/problems`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setFilteredHistory(data.problems)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar problemas da coleção:', error)
+    }
   }
 
   const handleCreateCollection = async (newCollection) => {
@@ -156,10 +179,41 @@ function App() {
   }
 
   const handleToggleHistory = () => {
-    setShowHistory(!showHistory)
-    if (!showHistory) {
-      setResult(null) // Limpar resultado quando abrir histórico
+    if (showHistory) {
+      // Fechar histórico - voltar ao input
+      setShowHistory(false)
+      setViewMode('input')
+      setSelectedCollection(null)
+    } else {
+      // Abrir histórico
+      setShowHistory(true)
+      setViewMode('history')
+      setSelectedCollection(null)
+      setResult(null)
     }
+  }
+
+  // ✅ NOVA FUNÇÃO: Abrir problema para estudo (coleções)
+  const handleStudyProblem = (problem) => {
+    console.log('📖 Abrindo problema para estudo:', problem.text)
+    
+    setResult({
+      type: 'study',
+      problem: problem,
+      explanation: problem.explanation,
+      processingTime: problem.solved_time
+    })
+    
+    setViewMode('study')
+    setShowHistory(false)
+  }
+
+  // ✅ NOVA FUNÇÃO: Voltar ao input
+  const handleBackToInput = () => {
+    setViewMode('input')
+    setShowHistory(false)
+    setSelectedCollection(null)
+    setResult(null)
   }
 
   const formatTime = (seconds) => {
@@ -208,8 +262,67 @@ function App() {
       onToggleHistory={handleToggleHistory}
     >
       <div className="space-y-8">
-        {/* Input Principal - sempre visível quando não está no histórico */}
-        {!showHistory && (
+        
+        {/* ✅ MODO ESTUDO - Tela dedicada para ver resolução */}
+        {viewMode === 'study' && result && (
+          <div className="space-y-6">
+            {/* Botão Voltar */}
+            <button
+              onClick={handleBackToInput}
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+            >
+              ← Voltar
+            </button>
+
+            {/* Resolução em Tela Cheia */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+              <div className="flex items-start justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  📖 Resolução Completa
+                </h2>
+                
+                {result.processingTime && (
+                  <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                    ⏱️ {formatTime(result.processingTime)}
+                  </span>
+                )}
+              </div>
+
+              {/* Problema Original */}
+              <div className="bg-blue-50 p-6 rounded-xl border-l-4 border-blue-400 mb-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="font-semibold text-blue-800 mb-2">Problema:</p>
+                    <p className="text-blue-700 text-lg">{result.problem.text}</p>
+                  </div>
+                  
+                  {/* Botão de Favorito */}
+                  <button
+                    onClick={() => toggleFavorite(result.problem.id)}
+                    className={`ml-4 p-3 rounded-lg transition-colors ${
+                      result.problem.is_favorite
+                        ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                        : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                    }`}
+                    title={result.problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                  >
+                    <Heart className={`w-6 h-6 ${result.problem.is_favorite ? 'fill-current' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Explicação */}
+              <div className="bg-gray-50 p-6 rounded-xl">
+                <div className="prose prose-lg max-w-none">
+                  {formatExplanation(result.explanation)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ MODO INPUT - Card principal (apenas quando não está no histórico ou coleção) */}
+        {viewMode === 'input' && (
           <MathInput
             onExplain={handleExplain}
             onGenerateSimilar={handleGenerateSimilar}
@@ -232,8 +345,8 @@ function App() {
           </div>
         )}
 
-        {/* Área de Resultados - apenas quando há resultado e não está no histórico */}
-        {result && !isLoading && !showHistory && (
+        {/* ✅ RESULTADOS - apenas no modo input */}
+        {viewMode === 'input' && result && !isLoading && (
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-800">
@@ -331,21 +444,21 @@ function App() {
           </div>
         )}
 
-        {/* Histórico - apenas quando botão História for clicado */}
-        {showHistory && (
+        {/* ✅ HISTÓRICO - Lista simples de problemas solicitados */}
+        {viewMode === 'history' && (
           <div className="space-y-6">
             {/* Estatísticas Rápidas */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl p-4 border border-gray-200 text-center">
                 <div className="text-2xl font-bold text-blue-600">{history.length}</div>
-                <div className="text-sm text-gray-600">Problemas Resolvidos</div>
+                <div className="text-sm text-gray-600">Problemas Consultados</div>
               </div>
               
               <div className="bg-white rounded-xl p-4 border border-gray-200 text-center">
                 <div className="text-2xl font-bold text-red-500">
                   {history.filter(p => p.is_favorite).length}
                 </div>
-                <div className="text-sm text-gray-600">Favoritos</div>
+                <div className="text-sm text-gray-600">Salvos (Favoritos)</div>
               </div>
               
               <div className="bg-white rounded-xl p-4 border border-gray-200 text-center">
@@ -363,44 +476,36 @@ function App() {
               </div>
             </div>
 
-            {/* Lista do Histórico */}
-            {filteredHistory.length > 0 && (
+            {/* Lista do Histórico - SEM resolução */}
+            {history.length > 0 && (
               <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-gray-800">
-                    📚 {getFilterTitle()} ({filteredHistory.length})
+                    📚 Histórico de Consultas ({history.length})
                   </h3>
                   
-                  {selectedCollection && (
-                    <button
-                      onClick={() => handleCollectionSelect(null)}
-                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Ver todos →
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      if (confirm('Tem certeza que deseja limpar todo o histórico?')) {
+                        setHistory([])
+                        console.log('🧹 Histórico limpo')
+                      }
+                    }}
+                    className="text-sm text-red-600 hover:text-red-800 font-medium"
+                  >
+                    🗑️ Limpar Histórico
+                  </button>
                 </div>
                 
                 <div className="space-y-3">
-                  {filteredHistory.slice(0, 20).map((problem) => (
+                  {history.slice(0, 20).map((problem) => (
                     <div 
                       key={problem.id}
                       className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors group"
                     >
                       <div className="flex items-start justify-between">
-                        <div 
-                          className="flex-1 cursor-pointer"
-                          onClick={() => {
-                            setResult({
-                              type: 'explanation',
-                              subType: 'detailed',
-                              problem: problem,
-                              explanation: problem.explanation,
-                              processingTime: problem.solved_time
-                            })
-                            setShowHistory(false) // Fechar histórico ao visualizar
-                          }}
-                        >
+                        {/* ✅ SEM CLIQUE para abrir resolução - apenas mostra o que foi perguntado */}
+                        <div className="flex-1">
                           <p className="font-medium text-gray-800 mb-1">{problem.text}</p>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
@@ -411,6 +516,99 @@ function App() {
                               <span>⏱️ {formatTime(problem.solved_time)}</span>
                             )}
                             <span>{new Date(problem.created_at).toLocaleDateString('pt-BR')}</span>
+                            {problem.is_favorite && <span className="text-red-500">❤️ Salvo</span>}
+                          </div>
+                        </div>
+                        
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {/* Excluir */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteProblem(problem.id)
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Excluir do histórico"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {history.length > 20 && (
+                  <div className="text-center mt-4">
+                    <p className="text-gray-500 text-sm">
+                      Mostrando 20 de {history.length} consultas
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mensagem quando não há histórico */}
+            {history.length === 0 && (
+              <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 text-center">
+                <div className="text-gray-500">
+                  <p className="text-lg font-semibold mb-2">📚 Nenhuma consulta ainda</p>
+                  <p className="text-sm mb-4">Faça sua primeira pergunta para começar!</p>
+                  <button
+                    onClick={() => setViewMode('input')}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Fazer Primeira Consulta
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ✅ COLEÇÃO - Lista de problemas salvos COM resolução */}
+        {viewMode === 'collection' && selectedCollection && (
+          <div className="space-y-6">
+            {/* Header da Coleção */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  📚 {selectedCollection === 'favorites' ? 'Favoritos' : 'Coleção Selecionada'}
+                </h2>
+                <button
+                  onClick={handleBackToInput}
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  ← Voltar
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de Problemas Salvos */}
+            {filteredHistory.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  Problemas Salvos ({filteredHistory.length})
+                </h3>
+                
+                <div className="space-y-3">
+                  {filteredHistory.slice(0, 10).map((problem) => (
+                    <div 
+                      key={problem.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:bg-blue-50 transition-colors cursor-pointer group"
+                      onClick={() => handleStudyProblem(problem)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-800 mb-1">{problem.text}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>{'⭐'.repeat(problem.difficulty_level)}</span>
+                            {problem.solved_time && (
+                              <span>⏱️ {formatTime(problem.solved_time)}</span>
+                            )}
+                            <span>{new Date(problem.created_at).toLocaleDateString('pt-BR')}</span>
+                            <span className="text-blue-600">👁️ Clique para estudar</span>
                           </div>
                         </div>
                         
@@ -449,45 +647,27 @@ function App() {
                   ))}
                 </div>
                 
-                {filteredHistory.length > 20 && (
+                {filteredHistory.length > 10 && (
                   <div className="text-center mt-4">
                     <p className="text-gray-500 text-sm">
-                      Mostrando 20 de {filteredHistory.length} problemas
-                    </p>
-                  </div>
-                )}
-
-                {/* Mensagem quando não há problemas na coleção/filtro */}
-                {filteredHistory.length === 0 && selectedCollection && (
-                  <div className="text-center py-8 text-gray-500">
-                    <p className="mb-2">
-                      {selectedCollection === 'favorites' 
-                        ? '❤️ Nenhum problema favorito ainda'
-                        : '📚 Nenhum problema nesta coleção ainda'
-                      }
-                    </p>
-                    <p className="text-sm">
-                      {selectedCollection === 'favorites' 
-                        ? 'Marque problemas como favoritos clicando no ❤️'
-                        : 'Resolva alguns problemas para populá-la automaticamente'
-                      }
+                      Mostrando 10 de {filteredHistory.length} problemas
                     </p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Mensagem quando não há histórico geral */}
-            {history.length === 0 && (
+            {/* Mensagem quando coleção está vazia */}
+            {filteredHistory.length === 0 && (
               <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 text-center">
                 <div className="text-gray-500">
-                  <p className="text-lg font-semibold mb-2">📚 Nenhum problema resolvido ainda</p>
-                  <p className="text-sm mb-4">Comece resolvendo seu primeiro problema de matemática!</p>
+                  <p className="text-lg font-semibold mb-2">📚 Coleção vazia</p>
+                  <p className="text-sm mb-4">Resolva e salve problemas para populá-la!</p>
                   <button
-                    onClick={() => setShowHistory(false)}
+                    onClick={handleBackToInput}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                   >
-                    Resolver Primeiro Problema
+                    Resolver Problemas
                   </button>
                 </div>
               </div>
