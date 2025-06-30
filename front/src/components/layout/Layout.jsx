@@ -4,14 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateCollection, showHistory, onToggleHistory }) => {
   const [collections, setCollections] = useState([])
-  const [showSidebar, setShowSidebar] = useState(false) // Fechada por padrão
+  const [showSidebar, setShowSidebar] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newCollection, setNewCollection] = useState({
     name: '',
     color: '#4ECDC4'
   })
 
-  // Carregar coleções
   useEffect(() => {
     loadCollections()
   }, [])
@@ -22,7 +21,11 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
       const data = await response.json()
       
       if (data.success) {
-        setCollections(data.collections)
+        const collectionsWithCount = data.collections.map(collection => ({
+          ...collection,
+          problem_count: collection.problem_count || 0
+        }))
+        setCollections(collectionsWithCount)
       }
     } catch (error) {
       console.error('Erro ao carregar coleções:', error)
@@ -44,14 +47,14 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
         body: JSON.stringify({
           name: newCollection.name,
           color: newCollection.color,
-          icon: '📚' // Ícone fixo para todas
+          icon: '📚'
         }),
       })
 
       const data = await response.json()
 
       if (data.success) {
-        await loadCollections() // Recarregar lista
+        await loadCollections()
         setShowCreateModal(false)
         setNewCollection({ name: '', color: '#4ECDC4' })
         
@@ -74,13 +77,10 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Conteúdo Principal */}
       <div className="min-h-screen flex flex-col">
-        {/* Header */}
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-30">
           <div className="px-4 py-4">
             <div className="flex items-center justify-between">
-              {/* Logo */}
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
                   🧮
@@ -100,9 +100,7 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                 </div>
               </div>
               
-              {/* Actions */}
               <div className="flex items-center gap-2">
-                {/* Botão Coleções (Coração) */}
                 <button 
                   onClick={() => setShowSidebar(!showSidebar)}
                   className={`p-2 rounded-lg transition-colors duration-200 ${
@@ -115,7 +113,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                   <Heart className="w-5 h-5" />
                 </button>
                 
-                {/* Botão Histórico */}
                 <button 
                   onClick={onToggleHistory}
                   className={`p-2 rounded-lg transition-colors duration-200 ${
@@ -128,7 +125,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                   <History className="w-5 h-5" />
                 </button>
                 
-                {/* Botão Configurações */}
                 <button className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
                   <Settings className="w-5 h-5" />
                 </button>
@@ -137,18 +133,15 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="flex-1 px-4 py-8">
           {children}
         </main>
 
-        {/* Footer */}
         <footer className="mt-16 py-8 text-center text-gray-500 text-sm border-t border-gray-200">
           <p>ExplicaAI - Projeto Social para Educação Matemática Offline</p>
         </footer>
       </div>
 
-      {/* Overlay escuro quando sidebar aberta */}
       <AnimatePresence>
         {showSidebar && (
           <motion.div
@@ -161,7 +154,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
         )}
       </AnimatePresence>
 
-      {/* Sidebar de Coleções - OVERLAY */}
       <AnimatePresence>
         {showSidebar && (
           <motion.aside
@@ -171,9 +163,8 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col"
           >
-            {/* Header da Sidebar */}
             <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-gray-800">📚 Coleções</h2>
                 <div className="flex gap-2">
                   <button
@@ -194,60 +185,66 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
               </div>
             </div>
 
-            {/* Lista de Coleções */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {collections.map((collection) => (
-                <motion.button
-                  key={collection.id}
-                  onClick={() => {
-                    onCollectionSelect && onCollectionSelect(collection.id)
-                    setShowSidebar(false) // Fechar sidebar ao selecionar
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full text-left p-3 rounded-xl border transition-all duration-200 ${
-                    selectedCollection === collection.id
-                      ? 'border-2 shadow-lg'
-                      : 'border border-gray-200 hover:border-gray-300 hover:shadow-md'
-                  }`}
-                  style={{
-                    borderColor: selectedCollection === collection.id ? collection.color : undefined,
-                    backgroundColor: selectedCollection === collection.id 
-                      ? `${collection.color}15` 
-                      : 'white'
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span 
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-md"
-                        style={{ backgroundColor: collection.color }}
-                      >
-                        📚
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-800 truncate">
-                          {collection.name}
-                        </h3>
+              {collections.map((collection) => {
+                const problemCount = parseInt(collection.problem_count) || 0
+                
+                return (
+                  <motion.button
+                    key={collection.id}
+                    onClick={() => {
+                      onCollectionSelect && onCollectionSelect(collection.id)
+                      setShowSidebar(false)
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full text-left p-3 rounded-xl border transition-all duration-200 ${
+                      selectedCollection === collection.id
+                        ? 'border-2 shadow-lg'
+                        : 'border border-gray-200 hover:border-gray-300 hover:shadow-md'
+                    }`}
+                    style={{
+                      borderColor: selectedCollection === collection.id ? collection.color : undefined,
+                      backgroundColor: selectedCollection === collection.id 
+                        ? `${collection.color}15` 
+                        : 'white'
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span 
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-md"
+                          style={{ backgroundColor: collection.color }}
+                        >
+                          {collection.icon || '📚'}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-800 truncate">
+                            {collection.name}
+                          </h3>
+                        </div>
+                      </div>
+                      
+                      {/* ✅ ÁREA DIREITA COMPLETAMENTE REESTRUTURADA - SEM 0 EXTRA! */}
+                      <div className="flex flex-col items-end gap-1">
+                        <span 
+                          className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-bold rounded-full text-white shadow-sm"
+                          style={{ 
+                            backgroundColor: collection.color,
+                            color: 'white'
+                          }}
+                        >
+                          {problemCount}
+                        </span>
+                        
+                        {collection.is_system === 1 && (
+                          <div className="text-xs text-gray-400">Sistema</div>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span 
-                        className="inline-block px-2 py-1 text-xs font-medium rounded-full"
-                        style={{ 
-                          backgroundColor: `${collection.color}20`,
-                          color: collection.color 
-                        }}
-                      >
-                        {collection.problem_count || 0}
-                      </span>
-                      {collection.is_system && (
-                        <div className="text-xs text-gray-400 mt-1">Sistema</div>
-                      )}
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
+                  </motion.button>
+                )
+              })}
 
               {collections.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
@@ -265,7 +262,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
         )}
       </AnimatePresence>
 
-      {/* Modal Criar Coleção Simplificado */}
       <AnimatePresence>
         {showCreateModal && (
           <motion.div
@@ -295,7 +291,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
               </div>
 
               <div className="space-y-4">
-                {/* Nome */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Nome da Coleção
@@ -306,10 +301,10 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                     value={newCollection.name}
                     onChange={(e) => setNewCollection(prev => ({ ...prev, name: e.target.value }))}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+                    autoFocus
                   />
                 </div>
 
-                {/* Cor */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Cor da Coleção
@@ -330,26 +325,35 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                   </div>
                 </div>
 
-                {/* Preview */}
                 <div className="p-3 bg-gray-50 rounded-lg border">
                   <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                  <div className="flex items-center gap-3">
-                    <span 
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-md"
-                      style={{ backgroundColor: newCollection.color }}
-                    >
-                      📚
-                    </span>
-                    <div>
-                      <h4 className="font-semibold text-gray-800">
-                        {newCollection.name || 'Nome da Coleção'}
-                      </h4>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span 
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-md"
+                        style={{ backgroundColor: newCollection.color }}
+                      >
+                        📚
+                      </span>
+                      <div>
+                        <h4 className="font-semibold text-gray-800">
+                          {newCollection.name || 'Nome da Coleção'}
+                        </h4>
+                      </div>
                     </div>
+                    <span 
+                      className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-bold rounded-full text-white shadow-sm"
+                      style={{ 
+                        backgroundColor: newCollection.color,
+                        color: 'white'
+                      }}
+                    >
+                      0
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Botões */}
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setShowCreateModal(false)}
