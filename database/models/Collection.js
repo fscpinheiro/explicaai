@@ -150,13 +150,37 @@ class Collection {
     }
 
     try {
-      return await this.db.all(sql, params);
+      console.log('🔍 [DEBUG] Query SQL executada:', sql);
+      const collections = await this.db.all(sql, params);
+      
+      // ✅ DEBUG: Verificar contadores reais vs query
+      for (const collection of collections) {
+        if (collection.name === 'Favoritos') {
+          // Verificar quantos problemas REALMENTE existem
+          const realCount = await this.db.get(
+            'SELECT COUNT(*) as count FROM problem_collections WHERE collection_id = ?', 
+            [collection.id]
+          );
+          console.log(`🔍 [DEBUG] Favoritos - Count da query: ${collection.problem_count}, Count real: ${realCount.count}`);
+          
+          // Verificar se há registros órfãos
+          const orphanCheck = await this.db.get(
+            `SELECT COUNT(*) as count 
+            FROM problem_collections pc 
+            LEFT JOIN problems p ON pc.problem_id = p.id 
+            WHERE pc.collection_id = ? AND p.id IS NULL`,
+            [collection.id]
+          );
+          console.log(`🔍 [DEBUG] Favoritos - Registros órfãos: ${orphanCheck.count}`);
+        }
+      }
+      
+      return collections;
     } catch (error) {
       console.error('❌ Erro ao listar coleções:', error.message);
       throw error;
     }
   }
-
   /**
    * Atualizar coleção
    */

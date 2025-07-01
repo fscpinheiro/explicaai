@@ -13,10 +13,24 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
 
   useEffect(() => {
     loadCollections()
+    const handleCollectionsUpdate = () => {
+      console.log('📚 [DEBUG] handleCollectionsUpdate() RECEBIDA!')
+      console.log('📚 [DEBUG] Recarregando coleções...')
+      console.log('🔄 Recarregando coleções...')
+      loadCollections()
+    }
+    console.log('📚 [DEBUG] Registrando listener collectionsUpdated...')
+    window.addEventListener('collectionsUpdated', handleCollectionsUpdate)
+    return () => {
+      console.log('📚 [DEBUG] Removendo listener collectionsUpdated...')
+      window.removeEventListener('collectionsUpdated', handleCollectionsUpdate)
+    }
   }, [])
 
   const loadCollections = async () => {
+    console.log('🔄 [DEBUG] loadCollections() INICIADA!')
     try {
+      console.log('🔄 [DEBUG] Fazendo fetch para /api/collections...')
       const response = await fetch('/api/collections')
       const data = await response.json()
       
@@ -25,7 +39,12 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
           ...collection,
           problem_count: collection.problem_count || 0
         }))
+        console.log('🔄 [DEBUG] Coleções processadas:', collectionsWithCount)
         setCollections(collectionsWithCount)
+        console.log('🔄 [DEBUG] Estado atualizado com', collectionsWithCount.length, 'coleções')
+    
+      } else {
+      console.log('❌ [DEBUG] API retornou erro:', data)
       }
     } catch (error) {
       console.error('Erro ao carregar coleções:', error)

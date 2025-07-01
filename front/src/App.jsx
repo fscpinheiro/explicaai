@@ -83,6 +83,7 @@ function App() {
         }
 
         console.log(`${data.isFavorite ? '❤️ Adicionado aos' : '💔 Removido dos'} favoritos!`)
+        notifyCollectionsChanged()
       }
     } catch (error) {
       console.error('Erro ao alterar favorito:', error)
@@ -125,7 +126,7 @@ function App() {
         }
 
         console.log('🗑️ Problema excluído com sucesso!')
-         reloadCollections()
+        notifyCollectionsChanged()
          
         // Fechar modal
         setDeleteModal({
@@ -168,7 +169,7 @@ function App() {
 
     // Recarregar histórico para mostrar o novo problema
     await loadHistory()
-    
+    notifyCollectionsChanged() 
     // Mudar para modo input com resultado
     setViewMode('input')
     setShowHistory(false)
@@ -297,6 +298,21 @@ function App() {
     if (selectedCollection === null) return 'Todos os Problemas'
     if (selectedCollection === 'favorites') return 'Problemas Favoritos'
     return 'Problemas Filtrados'
+  }
+
+  const notifyCollectionsChanged = () => {
+    console.log('🔔 [DEBUG] notifyCollectionsChanged() CHAMADA!')
+    console.log('🔔 [DEBUG] Disparando evento collectionsUpdated...')
+
+    window.dispatchEvent(new CustomEvent('collectionsUpdated'))
+    
+    console.log('🔔 [DEBUG] Evento disparado, iniciando setTimeout...')
+    setTimeout(() => {
+      console.log('🔔 [DEBUG] setTimeout executado, chamando loadHistory...')
+      loadHistory()
+    }, 100)
+
+    console.log('🔄 Notificando atualização de coleções')
   }
 
   return (

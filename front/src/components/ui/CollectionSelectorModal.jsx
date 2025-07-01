@@ -73,6 +73,7 @@ const CollectionSelectorModal = ({
         setSelectedCollection(data.collection.id)
         setShowCreateForm(false)
         setNewCollection({ name: '', color: '#4ECDC4' })
+        window.dispatchEvent(new CustomEvent('collectionsUpdated'))
       } else {
         alert('Erro ao criar coleção: ' + (data.message || data.error))
       }

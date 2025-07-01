@@ -29,6 +29,10 @@ router.get('/', asyncHandler(async (req, res) => {
 
   const collections = await req.db.Collection.findAll(options);
   
+  console.log('🔍 [BACKEND] Coleções retornadas:', 
+    collections.map(c => ({ id: c.id, name: c.name, count: c.problem_count }))
+  );
+  
   res.json(successResponse({
     collections,
     total: collections.length

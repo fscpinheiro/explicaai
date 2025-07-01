@@ -257,18 +257,31 @@ class Problem {
    */
   async delete(id) {
     try {
-      // Verificar se existe
       const problem = await this.findById(id);
       if (!problem) {
         throw new Error('Problema não encontrado');
       }
 
-      // Excluir (CASCADE vai remover relacionamentos)
-      const result = await this.db.run('DELETE FROM problems WHERE id = ?', [id]);
-      
-      if (result.changes === 0) {
-        throw new Error('Erro ao excluir problema');
-      }
+      console.log('🗑️ [BACKEND] Excluindo problema ID:', id);
+      console.log('🗑️ [BACKEND] Coleções do problema:', problem.collection_ids);
+
+      // ✅ NOVA ABORDAGEM: Usar transação para excluir tudo
+      await this.db.transaction(async () => {
+        // 1. Primeiro remover da tabela problem_collections
+        const collectionsResult = await this.db.run(
+          'DELETE FROM problem_collections WHERE problem_id = ?', 
+          [id]
+        );
+        console.log('🗑️ [BACKEND] Removido de problem_collections, changes:', collectionsResult.changes);
+
+        // 2. Depois excluir o problema
+        const problemResult = await this.db.run('DELETE FROM problems WHERE id = ?', [id]);
+        console.log('🗑️ [BACKEND] Problema excluído, changes:', problemResult.changes);
+        
+        if (problemResult.changes === 0) {
+          throw new Error('Erro ao excluir problema');
+        }
+      });
 
       await this.logAction('delete', id, { text: problem.text });
       console.log(`🗑️ Problema excluído: ID ${id} - "${truncateText(problem.text)}"`);
