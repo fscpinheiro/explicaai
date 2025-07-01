@@ -9,68 +9,34 @@ class Collection {
   }
 
   /**
-   * Criar coleções padrão do sistema
+   * Criar apenas coleção Favoritos como padrão
    */
   async createDefaultCollections() {
     const defaultCollections = [
       {
         name: 'Favoritos',
-        description: 'Problemas marcados como favoritos',
         color: '#FF6B6B',
         icon: '⭐',
         is_default: 1,
         is_system: 1
-      },
-      {
-        name: 'Álgebra Básica',
-        description: 'Equações lineares, quadráticas e sistemas',
-        color: '#4ECDC4',
-        icon: '🔢',
-        is_system: 1
-      },
-      {
-        name: 'Geometria',
-        description: 'Áreas, volumes e teoremas geométricos',
-        color: '#45B7D1',
-        icon: '📐',
-        is_system: 1
-      },
-      {
-        name: 'Funções',
-        description: 'Funções lineares, quadráticas e trigonométricas',
-        color: '#96CEB4',
-        icon: '📊',
-        is_system: 1
-      },
-      {
-        name: 'Preparação ENEM',
-        description: 'Problemas típicos do ENEM e vestibulares',
-        color: '#FFEAA7',
-        icon: '🎯',
-        is_system: 1
-      },
-      {
-        name: 'Para Revisar',
-        description: 'Problemas que precisam ser revistos',
-        color: '#DDA0DD',
-        icon: '🔄',
-        is_system: 1
       }
+      // ✅ REMOVIDAS todas as outras coleções padrão
+      // O usuário pode criar suas próprias coleções personalizadas
     ];
 
     for (const collection of defaultCollections) {
       try {
         await this.db.run(
-          `INSERT OR IGNORE INTO collections (name, description, color, icon, is_default, is_system) 
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [collection.name, collection.description, collection.color, collection.icon, collection.is_default, collection.is_system]
+          `INSERT OR IGNORE INTO collections (name, color, icon, is_default, is_system) 
+           VALUES (?, ?, ?, ?, ?)`,
+          [collection.name, collection.color, collection.icon, collection.is_default, collection.is_system]
         );
       } catch (error) {
         console.log(`📚 Coleção '${collection.name}' já existe`);
       }
     }
 
-    console.log('📚 Coleções padrão verificadas/criadas');
+    console.log('📚 Coleção padrão verificada/criada: apenas Favoritos');
   }
 
   /**
@@ -79,7 +45,6 @@ class Collection {
   async create(data) {
     const { 
       name, 
-      description = '', 
       color = null, 
       icon = null,
       is_system = 0 
@@ -94,10 +59,6 @@ class Collection {
       throw new Error('Nome da coleção deve ter no máximo 100 caracteres');
     }
 
-    if (description && description.length > 500) {
-      throw new Error('Descrição deve ter no máximo 500 caracteres');
-    }
-
     // Verificar se já existe
     const existing = await this.findByName(name.trim());
     if (existing) {
@@ -109,9 +70,9 @@ class Collection {
 
     try {
       const result = await this.db.run(
-        `INSERT INTO collections (name, description, color, icon, is_system) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [name.trim(), description.trim(), finalColor, finalIcon, is_system]
+        `INSERT INTO collections (name, color, icon, is_system) 
+         VALUES (?, ?, ?, ?)`,
+        [name.trim(), finalColor, finalIcon, is_system]
       );
 
       await this.logAction('create_collection', result.lastID, { name, color: finalColor, icon: finalIcon });
@@ -200,7 +161,7 @@ class Collection {
    * Atualizar coleção
    */
   async update(id, data) {
-    const { name, description, color, icon } = data;
+    const { name, color, icon } = data;
     
     // Verificar se existe
     const existing = await this.findById(id);
@@ -209,8 +170,8 @@ class Collection {
     }
 
     // Não permitir edição de coleções do sistema (exceto cor e ícone)
-    if (existing.is_system && (name || description)) {
-      throw new Error('Não é possível alterar nome/descrição de coleções do sistema');
+    if (existing.is_system && name) {
+      throw new Error('Não é possível alterar nome de coleções do sistema');
     }
 
     const updates = [];
@@ -237,15 +198,6 @@ class Collection {
 
       updates.push('name = ?');
       params.push(name.trim());
-    }
-
-    if (description !== undefined) {
-      if (description && description.length > 500) {
-        throw new Error('Descrição deve ter no máximo 500 caracteres');
-      }
-
-      updates.push('description = ?');
-      params.push(description.trim());
     }
 
     if (color !== undefined) {
@@ -497,7 +449,6 @@ class Collection {
       // Criar nova coleção
       const newCollection = await this.create({
         name: newName,
-        description: `Cópia de: ${original.description}`,
         color: original.color,
         icon: original.icon
       });
@@ -563,7 +514,7 @@ class Collection {
   }
 
   /**
-   * Validar dados de coleção
+   * Validar dados de coleção - SEM descrição
    */
   validateData(data) {
     const errors = [];
@@ -574,10 +525,6 @@ class Collection {
       } else if (data.name.trim().length > 100) {
         errors.push('Nome deve ter no máximo 100 caracteres');
       }
-    }
-
-    if (data.description !== undefined && data.description.length > 500) {
-      errors.push('Descrição deve ter no máximo 500 caracteres');
     }
 
     if (data.color !== undefined && data.color && !/^#[0-9A-F]{6}$/i.test(data.color)) {

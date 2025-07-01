@@ -53,11 +53,10 @@ class Database {
    */
   async createTables() {
     const tables = [
-      // Tabela de coleções
+      // ✅ Tabela de coleções SEM DESCRIPTION
       `CREATE TABLE IF NOT EXISTS collections (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
-        description TEXT,
         color TEXT DEFAULT '#4A90E2',
         icon TEXT DEFAULT '📚',
         is_default BOOLEAN DEFAULT 0,
@@ -108,7 +107,11 @@ class Database {
       `CREATE INDEX IF NOT EXISTS idx_problems_source ON problems(source)`,
       `CREATE INDEX IF NOT EXISTS idx_problem_collections_problem ON problem_collections(problem_id)`,
       `CREATE INDEX IF NOT EXISTS idx_problem_collections_collection ON problem_collections(collection_id)`,
-      `CREATE INDEX IF NOT EXISTS idx_history_log_created_at ON history_log(created_at DESC)`
+      `CREATE INDEX IF NOT EXISTS idx_history_log_created_at ON history_log(created_at DESC)`,
+      
+      // ✅ Índices para collections sem description
+      `CREATE INDEX IF NOT EXISTS idx_collections_name ON collections(name)`,
+      `CREATE INDEX IF NOT EXISTS idx_collections_system ON collections(is_system)`
     ];
 
     for (const table of tables) {
