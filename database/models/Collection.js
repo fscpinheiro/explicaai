@@ -28,7 +28,7 @@ class Collection {
       try {
         await this.db.run(
           `INSERT OR IGNORE INTO collections (name, color, icon, is_default, is_system) 
-           VALUES (?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?)`,
           [collection.name, collection.color, collection.icon, collection.is_default, collection.is_system]
         );
       } catch (error) {

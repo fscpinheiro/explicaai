@@ -125,7 +125,8 @@ function App() {
         }
 
         console.log('🗑️ Problema excluído com sucesso!')
-        
+         reloadCollections()
+         
         // Fechar modal
         setDeleteModal({
           isOpen: false,
@@ -288,6 +289,10 @@ function App() {
     })
   }
 
+  const reloadCollections = () => {
+    setSelectedCollection(prev => prev) 
+  }
+
   const getFilterTitle = () => {
     if (selectedCollection === null) return 'Todos os Problemas'
     if (selectedCollection === 'favorites') return 'Problemas Favoritos'
@@ -337,18 +342,18 @@ function App() {
                     <p className="text-blue-700 text-lg">{result.problem.text}</p>
                   </div>
                   
-                  {/* Botão de Favorito */}
-                  <button
-                    onClick={() => toggleFavorite(result.problem.id)}
-                    className={`ml-4 p-3 rounded-lg transition-colors ${
-                      result.problem.is_favorite
-                        ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                        : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                    }`}
-                    title={result.problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                  >
-                    <Heart className={`w-6 h-6 ${result.problem.is_favorite ? 'fill-current' : ''}`} />
-                  </button>
+                  {/* Botão de Favorito - sempre mostra aqui pois é resultado recém explicado */}
+                    <button
+                      onClick={() => toggleFavorite(result.problem.id)}
+                      className={`ml-4 p-2 rounded-lg transition-colors ${
+                        result.problem.is_favorite
+                          ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                          : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                      }`}
+                      title={result.problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                    >
+                      <Heart className={`w-5 h-5 ${result.problem.is_favorite ? 'fill-current' : ''}`} />
+                    </button>
                 </div>
               </div>
 
@@ -655,21 +660,23 @@ function App() {
                         
                         {/* Actions */}
                         <div className="flex items-center gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {/* Favorito */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleFavorite(problem.id)
-                            }}
-                            className={`p-2 rounded-lg transition-colors ${
-                              problem.is_favorite
-                                ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                                : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                            }`}
-                            title={problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                          >
-                            <Heart className={`w-4 h-4 ${problem.is_favorite ? 'fill-current' : ''}`} />
-                          </button>
+                          {/* Favorito - só mostra se NÃO estiver em Favoritos OU se não for favorito */}
+                          {(selectedCollection !== 'favorites' || !problem.is_favorite) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleFavorite(problem.id)
+                              }}
+                              className={`p-2 rounded-lg transition-colors ${
+                                problem.is_favorite
+                                  ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                                  : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                              }`}
+                              title={problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                            >
+                              <Heart className={`w-4 h-4 ${problem.is_favorite ? 'fill-current' : ''}`} />
+                            </button>
+                          )}
                           
                           {/* Excluir */}
                           <button
