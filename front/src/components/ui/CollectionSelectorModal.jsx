@@ -7,7 +7,9 @@ const CollectionSelectorModal = ({
   onSelect, 
   onCancel,
   problemText,
-  defaultSelected = null
+  defaultSelected = null,
+  mode = 'save', 
+  currentCollectionId = null
 }) => {
   const [collections, setCollections] = useState([])
   const [selectedCollection, setSelectedCollection] = useState(defaultSelected)
@@ -30,11 +32,13 @@ const CollectionSelectorModal = ({
       const data = await response.json()
       
       if (data.success) {
-        setCollections(data.collections)
-        
-        // Se não tem coleção selecionada, selecionar Favoritos por padrão
-        if (!selectedCollection) {
-          const favorites = data.collections.find(c => c.name === 'Favoritos')
+        let filteredCollections = data.collections
+        if (mode === 'move' && currentCollectionId) {
+          filteredCollections = data.collections.filter(c => c.id !== currentCollectionId)
+        }
+        setCollections(filteredCollections)
+        if (!selectedCollection && mode === 'save') {
+          const favorites = filteredCollections.find(c => c.name === 'Favoritos') // ✅ MUDE para filteredCollections
           if (favorites) {
             setSelectedCollection(favorites.id)
           }
@@ -121,7 +125,7 @@ const CollectionSelectorModal = ({
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-800">
-                📚 Escolher Coleção
+                {mode === 'save' ? '📚 Escolher Coleção' : '📁 Trocar de Coleção'}
               </h3>
               <button
                 onClick={onCancel}
@@ -212,7 +216,7 @@ const CollectionSelectorModal = ({
                     className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     <Heart className="w-4 h-4" />
-                    Salvar na Coleção
+                    <span>{mode === 'save' ? 'Salvar na Coleção' : 'Mover para Coleção'}</span>
                   </button>
                 </div>
               </>

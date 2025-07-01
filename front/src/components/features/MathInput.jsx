@@ -9,14 +9,6 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
   const [showModal, setShowModal] = useState(false)
   const [currentSymbol, setCurrentSymbol] = useState(null)
 
-  const [collectionModal, setCollectionModal] = useState({
-    isOpen: false,
-    problemText: '',
-    explanation: '',
-    processingTime: 0,
-    type: 'detailed'
-  })
-
   // Símbolos matemáticos organizados por categoria
   const symbols = {
     basic: ['+', '−', '×', '÷', '=', '≠', '>', '<', '≥', '≤', '()', '[]'],
@@ -313,7 +305,7 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
     setIsLoading(true)
 
     try {
-      // ✅ Primeiro: Explicar sem salvar
+      // ✅ NOVO: Apenas explicar, sem salvar automaticamente
       const response = await fetch('/api/explain-text', {
         method: 'POST',
         headers: {
@@ -327,14 +319,22 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
       const data = await response.json()
 
       if (data.success) {
-        // ✅ Abrir modal para escolher onde salvar
-        setCollectionModal({
-          isOpen: true,
-          problemText: problem.trim(),
+        // ✅ NOVO: Mostrar resultado temporário (não salvo)
+        onExplain({
+          type: type,
+          problem: {
+            text: problem.trim(),
+            is_favorite: false, // Não está salvo ainda
+            id: null // Não tem ID ainda
+          },
           explanation: data.explanation,
           processingTime: data.processingTime || 0,
-          type: type
+          autoCategory: data.autoCategory || null,
+          isTemporary: true // ✅ Flag para indicar que não está salvo
         })
+
+        // Limpar input
+        setProblem('')
       } else {
         alert('Erro: ' + (data.message || data.error))
       }
@@ -378,53 +378,6 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
       }
     } catch (error) {
       alert('Função "Gerar Similares" ainda não implementada. Em breve!')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Função para salvar na coleção escolhida
-  const handleSaveToCollection = async (collectionId) => {
-    if (!collectionModal.problemText || !collectionModal.explanation) return
-
-    setIsLoading(true)
-
-    try {
-      const response = await fetch('/api/problems', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: collectionModal.problemText,
-          explanation: collectionModal.explanation,
-          source: 'text',
-          solvedTime: collectionModal.processingTime,
-          collectionIds: [collectionId] // ✅ Salvar na coleção específica
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        // Fechar modal e chamar callback com resultado
-        setCollectionModal({ isOpen: false, problemText: '', explanation: '', processingTime: 0, type: 'detailed' })
-        
-        onExplain({
-          type: collectionModal.type,
-          problem: data.problem,
-          explanation: collectionModal.explanation,
-          processingTime: collectionModal.processingTime,
-          autoCategory: data.autoCategory || null
-        })
-
-        // Limpar input
-        setProblem('')
-      } else {
-        alert('Erro ao salvar: ' + (data.message || data.error))
-      }
-    } catch (error) {
-      alert('Erro ao salvar problema: ' + error.message)
     } finally {
       setIsLoading(false)
     }
@@ -663,13 +616,7 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
           </motion.div>
         )}
       </AnimatePresence>
-        {/* Modal de Seleção de Coleção */}
-       <CollectionSelectorModal
-        isOpen={collectionModal.isOpen}
-        onSelect={handleSaveToCollection}
-        onCancel={cancelSaveToCollection}
-        problemText={collectionModal.problemText}
-      />
+       
 
     </div>
   )

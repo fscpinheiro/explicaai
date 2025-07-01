@@ -3,6 +3,7 @@ import {  Heart, Trash2, MoreHorizontal, Sparkles } from 'lucide-react'
 import Layout from './components/layout/Layout'
 import MathInput from './components/features/MathInput'
 import DeleteConfirmationModal from './components/ui/DeleteConfirmationModal'
+import CollectionSelectorModal from './components/ui/CollectionSelectorModal'
 
 function App() {
   const [isLoading, setIsLoading] = useState(false)
@@ -12,6 +13,14 @@ function App() {
   const [filteredHistory, setFilteredHistory] = useState([])
   const [showHistory, setShowHistory] = useState(false)
   const [viewMode, setViewMode] = useState('input') // 'input', 'history', 'collection', 'study'
+
+  const [collectionModal, setCollectionModal] = useState({
+    isOpen: false,
+    problemText: '',
+    explanation: '',
+    processingTime: 0,
+    type: 'detailed'
+  })
 
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
@@ -58,7 +67,28 @@ function App() {
     }
   }
 
-  const toggleFavorite = async (problemId) => {
+  const toggleFavorite = async (problemId, problemData = null) => {
+    // ✅ NOVO: Se não tem ID, é um problema temporário que precisa ser salvo primeiro
+    if (!problemId || problemId === null) {
+      console.log('🆕 Problema temporário - abrindo modal para salvar')
+      
+      if (!problemData) {
+        console.error('❌ Dados do problema não fornecidos')
+        return
+      }
+      
+      // Abrir modal para escolher coleção para salvar problema temporário
+      setCollectionModal({
+        isOpen: true,
+        problemText: problemData.text,
+        explanation: problemData.explanation,
+        processingTime: problemData.processingTime || 0,
+        type: problemData.type || 'detailed'
+      })
+      return
+    }
+
+    // ✅ Fluxo normal para problemas já salvos
     try {
       const response = await fetch(`/api/problems/${problemId}/favorite`, {
         method: 'PUT'
@@ -300,6 +330,130 @@ function App() {
     return 'Problemas Filtrados'
   }
 
+  const [changeCategoryModal, setChangeCategoryModal] = useState({
+    isOpen: false,
+    problemId: null,
+    problemText: '',
+    currentCollectionId: null
+  })
+
+  const handleChangeProblemCollection = (problemId, problemText) => {
+    console.log('🔄 Abrindo modal para trocar categoria do problema:', problemId)
+    
+    setChangeCategoryModal({
+      isOpen: true,
+      problemId: problemId,
+      problemText: problemText,
+      currentCollectionId: selectedCollection
+    })
+  }
+
+  const handleConfirmChangeCollection = async (newCollectionId) => {
+    const { problemId, currentCollectionId } = changeCategoryModal
+    
+    if (!problemId || !newCollectionId) return
+
+    try {
+      // Usar endpoint para atualizar coleções do problema
+      const response = await fetch(`/api/problems/${problemId}/collections`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          collectionIds: [newCollectionId] // Apenas a nova coleção
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Recarregar a lista da coleção atual
+        if (currentCollectionId) {
+          loadCollectionProblems(currentCollectionId)
+        }
+        
+        // Notificar mudança
+        notifyCollectionsChanged()
+        
+        // Fechar modal
+        setChangeCategoryModal({
+          isOpen: false,
+          problemId: null,
+          problemText: '',
+          currentCollectionId: null
+        })
+        
+        console.log('✅ Problema movido para nova coleção!')
+      } else {
+        alert('Erro ao mover problema: ' + (data.message || data.error))
+      }
+    } catch (error) {
+      alert('Erro ao mover problema: ' + error.message)
+    }
+  }
+
+  const handleCancelChangeCollection = () => {
+    setChangeCategoryModal({
+      isOpen: false,
+      problemId: null,
+      problemText: '',
+      currentCollectionId: null
+    })
+  }
+
+  const handleSaveToCollection = async (collectionId) => {
+    if (!collectionModal.problemText || !collectionModal.explanation) return
+
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/problems', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: collectionModal.problemText,
+          explanation: collectionModal.explanation,
+          source: 'text',
+          solvedTime: collectionModal.processingTime,
+          collectionIds: [collectionId]
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Fechar modal
+        setCollectionModal({ isOpen: false, problemText: '', explanation: '', processingTime: 0, type: 'detailed' })
+        
+        // Atualizar resultado com problema salvo
+        setResult(prev => ({
+          ...prev,
+          problem: { ...data.problem, is_favorite: true },
+          isTemporary: false
+        }))
+
+        // Recarregar histórico
+        await loadHistory()
+        notifyCollectionsChanged()
+
+        console.log('✅ Problema salvo com sucesso!')
+      } else {
+        alert('Erro ao salvar: ' + (data.message || data.error))
+      }
+    } catch (error) {
+      alert('Erro ao salvar problema: ' + error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const cancelSaveToCollection = () => {
+    setCollectionModal({ isOpen: false, problemText: '', explanation: '', processingTime: 0, type: 'detailed' })
+  }
+
   const notifyCollectionsChanged = () => {
     console.log('🔔 [DEBUG] notifyCollectionsChanged() CHAMADA!')
     console.log('🔔 [DEBUG] Disparando evento collectionsUpdated...')
@@ -358,18 +512,17 @@ function App() {
                     <p className="text-blue-700 text-lg">{result.problem.text}</p>
                   </div>
                   
-                  {/* Botão de Favorito - sempre mostra aqui pois é resultado recém explicado */}
-                    <button
-                      onClick={() => toggleFavorite(result.problem.id)}
-                      className={`ml-4 p-2 rounded-lg transition-colors ${
-                        result.problem.is_favorite
-                          ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                          : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                      }`}
-                      title={result.problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                    >
-                      <Heart className={`w-5 h-5 ${result.problem.is_favorite ? 'fill-current' : ''}`} />
-                    </button>
+                  {/* Trocar Categoria - problema já salvo */}
+                  <button
+                    onClick={() => handleChangeProblemCollection(result.problem.id, result.problem.text)}
+                    className="ml-4 p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1"
+                    title="Trocar de coleção"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span className="sr-only">Trocar de coleção</span>  
+                  </button>
                 </div>
               </div>
 
@@ -437,7 +590,15 @@ function App() {
                     
                     {/* Botão de Favorito */}
                     <button
-                      onClick={() => toggleFavorite(result.problem.id)}
+                      onClick={() => toggleFavorite(
+                        result.problem.id, 
+                        result.problem.id ? null : {
+                          text: result.problem.text,
+                          explanation: result.explanation,
+                          processingTime: result.processingTime,
+                          type: result.subType
+                        }
+                      )}
                       className={`ml-4 p-2 rounded-lg transition-colors ${
                         result.problem.is_favorite
                           ? 'text-red-500 bg-red-50 hover:bg-red-100'
@@ -676,23 +837,20 @@ function App() {
                         
                         {/* Actions */}
                         <div className="flex items-center gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {/* Favorito - só mostra se NÃO estiver em Favoritos OU se não for favorito */}
-                          {(selectedCollection !== 'favorites' || !problem.is_favorite) && (
+                          {/* Trocar Categoria - aparece quando está visualizando coleções */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                toggleFavorite(problem.id)
+                                handleChangeProblemCollection(problem.id, problem.text)
                               }}
-                              className={`p-2 rounded-lg transition-colors ${
-                                problem.is_favorite
-                                  ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                                  : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                              }`}
-                              title={problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                              className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Trocar de coleção"
                             >
-                              <Heart className={`w-4 h-4 ${problem.is_favorite ? 'fill-current' : ''}`} />
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                              </svg>
                             </button>
-                          )}
+                          
                           
                           {/* Excluir */}
                           <button
@@ -746,6 +904,12 @@ function App() {
         problemText={deleteModal.problemText}
         isLoading={deleteModal.isLoading}
       />
+      <CollectionSelectorModal
+  isOpen={collectionModal.isOpen}
+  onSelect={handleSaveToCollection}
+  onCancel={cancelSaveToCollection}
+  problemText={collectionModal.problemText}
+/>
     </Layout>
   )
 }
