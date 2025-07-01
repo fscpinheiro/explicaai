@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Heart, Trash2 } from 'lucide-react'
+import {  Heart, Trash2, MoreHorizontal, Sparkles } from 'lucide-react'
 import Layout from './components/layout/Layout'
 import MathInput from './components/features/MathInput'
+import DeleteConfirmationModal from './components/ui/DeleteConfirmationModal'
 
 function App() {
   const [isLoading, setIsLoading] = useState(false)
@@ -11,6 +12,13 @@ function App() {
   const [filteredHistory, setFilteredHistory] = useState([])
   const [showHistory, setShowHistory] = useState(false)
   const [viewMode, setViewMode] = useState('input') // 'input', 'history', 'collection', 'study'
+
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    problemId: null,
+    problemText: '',
+    isLoading: false
+  })
 
   // Carregar histórico de problemas ao iniciar
   useEffect(() => {
@@ -82,12 +90,26 @@ function App() {
   }
 
   const deleteProblem = async (problemId) => {
-    if (!confirm('Tem certeza que deseja excluir este problema?')) {
-      return
-    }
+    // Encontrar o problema para mostrar no modal
+    const problem = history.find(p => p.id === problemId)
+    if (!problem) return
+
+    // Abrir modal em vez de confirm()
+    setDeleteModal({
+      isOpen: true,
+      problemId: problemId,
+      problemText: problem.text,
+      isLoading: false
+    })
+  }
+
+  const confirmDeleteProblem = async () => {
+    if (!deleteModal.problemId) return
+
+    setDeleteModal(prev => ({ ...prev, isLoading: true }))
 
     try {
-      const response = await fetch(`/api/problems/${problemId}`, {
+      const response = await fetch(`/api/problems/${deleteModal.problemId}`, {
         method: 'DELETE'
       })
 
@@ -95,20 +117,39 @@ function App() {
 
       if (data.success) {
         // Remover do estado local
-        setHistory(prev => prev.filter(p => p.id !== problemId))
+        setHistory(prev => prev.filter(p => p.id !== deleteModal.problemId))
         
         // Se estava vendo este problema no resultado, limpar
-        if (result && result.problem && result.problem.id === problemId) {
+        if (result && result.problem && result.problem.id === deleteModal.problemId) {
           setResult(null)
         }
 
         console.log('🗑️ Problema excluído com sucesso!')
+        
+        // Fechar modal
+        setDeleteModal({
+          isOpen: false,
+          problemId: null,
+          problemText: '',
+          isLoading: false
+        })
       } else {
         alert('Erro ao excluir: ' + (data.message || data.error))
+        setDeleteModal(prev => ({ ...prev, isLoading: false }))
       }
     } catch (error) {
       alert('Erro ao excluir problema: ' + error.message)
+      setDeleteModal(prev => ({ ...prev, isLoading: false }))
     }
+  }
+
+  const cancelDeleteProblem = () => {
+    setDeleteModal({
+      isOpen: false,
+      problemId: null,
+      problemText: '',
+      isLoading: false
+    })
   }
 
   const handleExplain = async (resultData) => {
@@ -675,6 +716,13 @@ function App() {
           </div>
         )}
       </div>
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onConfirm={confirmDeleteProblem}
+        onCancel={cancelDeleteProblem}
+        problemText={deleteModal.problemText}
+        isLoading={deleteModal.isLoading}
+      />
     </Layout>
   )
 }
