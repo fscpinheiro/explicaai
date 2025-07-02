@@ -22,6 +22,8 @@ function App() {
     type: 'detailed'
   })
 
+  const [selectedCollectionName, setSelectedCollectionName] = useState('')
+
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
     problemId: null,
@@ -34,6 +36,7 @@ function App() {
     loadHistory()
   }, [])
 
+  
   // Filtrar histórico quando mudar coleção selecionada
   useEffect(() => {
     filterHistory()
@@ -228,9 +231,25 @@ function App() {
     setViewMode('collection')
     setShowHistory(false)
     setResult(null)
-    
+    //Nome da Coleção
+    fetchCollectionName(collectionId)
     // Carregar problemas da coleção específica
     loadCollectionProblems(collectionId)
+  }
+
+  const fetchCollectionName = async (collectionId) => {
+    try {
+      const response = await fetch(`/api/collections/${collectionId}`)
+      const data = await response.json()
+      
+      if (data.success && data.collection) {
+        setSelectedCollectionName(data.collection.name)
+        console.log('📚 Nome da coleção:', data.collection.name)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar nome da coleção:', error)
+      setSelectedCollectionName('Coleção')
+    }
   }
 
   const loadCollectionProblems = async (collectionId) => {
@@ -286,6 +305,7 @@ function App() {
     setViewMode('input')
     setShowHistory(false)
     setSelectedCollection(null)
+    setSelectedCollectionName('')
     setResult(null)
   }
 
@@ -797,7 +817,7 @@ function App() {
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-800">
-                  📚 {selectedCollection === 'favorites' ? 'Favoritos' : 'Coleção Selecionada'}
+                  📚 {selectedCollectionName || 'Coleção'}
                 </h2>
                 <button
                   onClick={handleBackToInput}
