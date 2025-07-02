@@ -313,7 +313,33 @@ Seja conciso, direto e didático. Foque na solução prática.`;
   createMathPrompt(problem) {
     return `Resolva este problema de matemática passo a passo: ${problem}`;
   }
+
+  /**
+   * Gerar exercícios similares
+   */
+  async generateSimilar(originalProblem) {
+    const prompt = this.createSimilarPrompt(originalProblem);
+    const result = await this.generate(prompt);
+    
+    console.log(`🎯 Exercícios similares gerados para: "${truncateText(originalProblem)}" em ${result.elapsedTime}s`);
+    
+    return result;
+  }
+
+  /**
+   * Analisar imagem de exercício
+   */
+  async analyzeImage(image) {
+    const prompt = this.createImagePrompt();
+    const result = await this.generate(prompt, image);
+    
+    console.log(`📷 Imagem analisada em ${result.elapsedTime}s`);
+    
+    return result;
+  }
 }
+
+
 
 // Instância singleton
 const ollamaService = new OllamaService();

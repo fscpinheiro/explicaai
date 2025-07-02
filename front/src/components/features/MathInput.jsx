@@ -374,7 +374,7 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
           processingTime: data.processingTime
         })
       } else {
-        alert('Função "Gerar Similares" ainda não implementada. Em breve!')
+        alert('Erro: ' + (data.message || data.error))
       }
     } catch (error) {
       alert('Função "Gerar Similares" ainda não implementada. Em breve!')
