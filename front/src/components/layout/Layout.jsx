@@ -205,6 +205,7 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                   <button
                     onClick={() => {
                       console.log('➕ Abrindo modal de criação')
+                      setShowSidebar(false)
                       setShowCreateModal(true)
                     }}
                     className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
