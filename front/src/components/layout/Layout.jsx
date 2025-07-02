@@ -100,7 +100,10 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
   const colorOptions = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
     '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
-    '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'
+    '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA',
+    '#FF9F43', '#FF6348', '#FF4757', '#5F27CD',
+    '#00D2D3', '#FF3838', '#FF9FF3', '#54A0FF',
+    '#2ED573', '#FFA502', '#FF6B81', '#3742FA'
   ]
 
   return (
