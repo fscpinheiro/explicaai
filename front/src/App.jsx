@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import {  Heart, Trash2, MoreHorizontal, Sparkles } from 'lucide-react'
+import {  Heart, Trash2, MoreHorizontal, Sparkles, BookOpen, Calculator } from 'lucide-react'
 import Layout from './components/layout/Layout'
 import MathInput from './components/features/MathInput'
 import DeleteConfirmationModal from './components/ui/DeleteConfirmationModal'
@@ -253,6 +253,127 @@ function App() {
       setSelectedCollectionName('Coleção')
     }
   }
+
+  // ✅ FUNÇÃO PARA EXTRAIR EXERCÍCIOS DO TEXTO DOS SIMILARES
+  const parseExercises = (similarText) => {
+    const exercises = []
+    const lines = similarText.split('\n')
+    
+    let currentExercise = null
+    let currentProblem = ''
+    
+    for (const line of lines) {
+      // ✅ PARAR se chegou na dica
+      if (line.includes('**Dica')) {
+        // Salvar exercício atual antes de parar
+        if (currentExercise && currentProblem.trim()) {
+          exercises.push({
+            title: currentExercise,
+            problem: currentProblem.trim()
+          })
+        }
+        break; // ✅ PARAR AQUI - não processar mais nada
+      }
+      
+      // Detectar início de exercício
+      if (line.includes('**Exer') && line.includes(':**')) {
+        // Salvar exercício anterior se existir
+        if (currentExercise && currentProblem.trim()) {
+          exercises.push({
+            title: currentExercise,
+            problem: currentProblem.trim()
+          })
+        }
+        
+        // Iniciar novo exercício
+        currentExercise = line.replace(/\*\*/g, '').trim()
+        currentProblem = ''
+        
+      } else if (currentExercise && line.trim() && !line.includes('**')) {
+        // Adicionar linha ao problema atual (ignorar linhas vazias e com **)
+        currentProblem += line.trim() + ' '
+      }
+    }
+    
+    // ✅ REMOVER ESTA PARTE que estava causando duplicação
+    // (o exercício já foi salvo quando encontrou **Dica)
+    
+    console.log('🎯 [DEBUG] Exercícios limpos:', exercises)
+    return exercises
+  }
+
+  // ✅ FUNÇÃO PARA RESOLVER EXERCÍCIO INDIVIDUAL
+  const handleSolveExercise = async (problemText, type = 'detailed') => {
+  setIsLoading(true)
+  
+  try {
+    if (type === 'answer') {
+      // Chamar endpoint "só resposta"
+      const response = await fetch('/api/problems/so-resposta', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          problem: problemText.trim() // ✅ CORRETO: usa 'problem'
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        handleExplain({
+          type: 'answer',
+          problem: {
+            text: problemText.trim(),
+            is_favorite: false,
+            id: null
+          },
+          explanation: data.explanation,
+          processingTime: data.processingTime || 0,
+          isTemporary: true
+        })
+        
+        setProblem(problemText.trim()) // ✅ USAR setProblem DO ESCOPO PRINCIPAL
+      } else {
+        alert('Erro: ' + (data.message || data.error))
+      }
+    } else {
+      // Chamar endpoint "passo a passo"
+      const response = await fetch('/api/problems/explain-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          text: problemText.trim(), // ✅ CORRIGIDO: usa 'text' em vez de 'problem'
+          type: 'detailed'
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        handleExplain({
+          type: 'detailed',
+          problem: data.problem,
+          explanation: data.explanation,
+          processingTime: data.processingTime || 0,
+          autoCategory: data.autoCategory || null,
+          isTemporary: false
+        })
+        
+        setProblem(problemText.trim()) // ✅ USAR setProblem DO ESCOPO PRINCIPAL
+      } else {
+        alert('Erro: ' + (data.message || data.error))
+      }
+    }
+  } catch (error) {
+    alert('Erro ao resolver exercício: ' + error.message)
+  } finally {
+    setIsLoading(false)
+  }
+}
 
   const loadCollectionProblems = async (collectionId) => {
     try {
@@ -710,11 +831,59 @@ function App() {
                   <p className="text-green-700">{result.originalProblem}</p>
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <div className="whitespace-pre-wrap text-gray-700">
-                    {result.similarProblems}
-                  </div>
+                {/* ✅ NOVA SEÇÃO: EXERCÍCIOS COM BOTÕES */}
+                <div className="space-y-4">
+                  {parseExercises(result.similarProblems).map((exercise, index) => (
+                    <div key={index} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800 mb-2">{exercise.title}</h4>
+                          <p className="text-gray-700 mb-3">{exercise.problem}</p>
+                        </div>
+                        
+                        {/* Botões para resolver */}
+                        <div className="flex gap-2 ml-4">
+                          {/* Botão Só Resposta */}
+                          <button
+                            onClick={() => handleSolveExercise(exercise.problem, 'answer')}
+                            disabled={isLoading}
+                            className="flex items-center gap-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                            title="Só Resposta"
+                          >
+                            {isLoading ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <BookOpen className="w-4 h-4" />
+                            )}
+                          </button>
+                          
+                          {/* Botão Passo a Passo */}
+                          <button
+                            onClick={() => handleSolveExercise(exercise.problem, 'detailed')}
+                            disabled={isLoading}
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                            title="Passo a Passo"
+                          >
+                            {isLoading ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Calculator className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+                
+                {/* Dica de Estudo (se existir) */}
+                {result.similarProblems.includes('**Dica de Estudo:**') && (
+                  <div className="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-400">
+                    <div className="text-blue-700">
+                      {result.similarProblems.split('**Dica de Estudo:**')[1]?.trim()}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
