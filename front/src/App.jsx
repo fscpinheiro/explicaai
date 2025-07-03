@@ -335,7 +335,7 @@ function App() {
       )
     }
     console.log('🔍 [FORMAT] Usando formatação DETAILED')
-    
+
     return text.split('\n').map((line, index) => {
       if (line.startsWith('**') && line.endsWith('**')) {
         // Títulos em negrito
@@ -589,7 +589,7 @@ function App() {
                 }}
                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
-                🧹 Limpar Resultado (Debug)
+                🧹 Limpar Resultado
               </button>
             </div>
           )}

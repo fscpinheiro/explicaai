@@ -184,34 +184,6 @@ FORMATO DA RESPOSTA:
 Certifique-se de que os exercícios sejam interessantes e realistas.`;
   }
 
-  /**
-   * Criar prompt para apenas a resposta
-   */
-  createAnswerOnlyPrompt(problem) {
-    console.log('🚨 createAnswerOnlyPrompt chamada com:', problem);
-    const prompt = `${problem}
-
-  RESPOSTA FINAL (APENAS O RESULTADO):`;
-    console.log('🚨 Prompt criado:', prompt);
-    return prompt;
-  }
-
-  /**
-   * Explicar problema matemático - APENAS RESPOSTA
-   */
-  async explainMathAnswerOnly(problem) {
-    console.log('🚨🚨🚨 FUNÇÃO explainMathAnswerOnly CHAMADA!');
-    console.log('🚨 Problem recebido:', problem);
-    
-    const prompt = this.createAnswerOnlyPrompt(problem);
-    console.log('🚨 Prompt gerado:', prompt);
-    
-    const result = await this.generate(prompt);
-    
-    console.log(`📝 Problema respondido apenas: "${truncateText(problem)}" em ${result.elapsedTime}s`);
-    
-    return result;
-  }
 
   /**
    * Criar prompt para análise de imagens
@@ -294,18 +266,6 @@ Use linguagem clara e didática para estudantes.`;
   }
 
   /**
-   * Explicar problema matemático - VERSÃO RESUMIDA
-   */
-  async explainMathBrief(problem) {
-    const prompt = this.createMathBriefPrompt(problem);
-    const result = await this.generate(prompt);
-    
-    console.log(`📝 Problema resumido: "${truncateText(problem)}" em ${result.elapsedTime}s`);
-    
-    return result;
-  }
-
-  /**
    * Explicar problema matemático - VERSÃO DETALHADA
    */
   async explainMath(problem) {
@@ -315,25 +275,6 @@ Use linguagem clara e didática para estudantes.`;
     console.log(`📝 Problema detalhado: "${this.truncateText ? this.truncateText(problem) : problem.substring(0, 50)}..." em ${result.elapsedTime}s`);
     
     return result;
-  }
-
-  /**
-   * Criar prompt para explicação RESUMIDA
-   */
-  createMathBriefPrompt(problem) {
-    return `Você é um professor de matemática. Resolva este problema de forma RESUMIDA e DIRETA:
-
-"${problem}"
-
-FORMATO DA RESPOSTA (MÁXIMO 3 PARÁGRAFOS):
-
-**Tipo:** [Identifique rapidamente o tipo de problema]
-
-**Solução:** [Resolva de forma direta, sem muitos detalhes]
-
-**Resposta:** [Destaque a resposta final claramente]
-
-Seja conciso, direto e didático. Foque na solução prática.`;
   }
 
   /**
