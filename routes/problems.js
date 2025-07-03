@@ -507,15 +507,11 @@ router.post('/explain-text',
  * POST /api/problems/teste-ola-mundo
  * TESTE: Endpoint para debug
  */
-router.post('/teste-ola-mundo', asyncHandler(async (req, res) => {
-  console.log('🚨🚨🚨 CHEGOU NA ROTA TESTE!');
-  console.log('🚨 Body recebido:', req.body);
-
+router.post('/so-resposta', asyncHandler(async (req, res) => {
+  
   try {
     const ollamaService = require('../services/ollamaService');
-    const resultado = await ollamaService.testeOlaMundo(req.body.problem);
-    
-    console.log('🚨 Resultado do service:', resultado);
+    const resultado = await ollamaService.soResposta(req.body.problem);
     
     res.json({
       success: true,

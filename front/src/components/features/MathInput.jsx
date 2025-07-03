@@ -511,20 +511,28 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
           {/* Explicação Resumida */}
           <button
             onClick={async () => {
+              if (!problem.trim()) {
+                alert('Por favor, digite um problema de matemática.')
+                return
+              }
+
+              setIsLoading(true) // ✅ ADICIONAR ESTA LINHA
+
               try {
                 console.log('🚨 Testando API...');
                 
-                const response = await fetch('/api/problems/teste-ola-mundo', {
+                const response = await fetch('/api/problems/so-resposta', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({ 
-                    problem:  problem.trim() 
+                    problem: problem.trim()
                   }),
                 });
 
                 const data = await response.json();
+                
                 if (data.success) {
                   onExplain({
                     type: 'answer',
@@ -543,12 +551,18 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
                 }
               } catch (error) {
                 alert(`❌ ERRO: ${error.message}`);
+              } finally {
+                setIsLoading(false) // ✅ ADICIONAR ESTA LINHA
               }
             }}
             disabled={!problem.trim() || isLoading}
             className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            <BookOpen className="w-5 h-5" />
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <BookOpen className="w-5 h-5" />
+            )}
             <span>Só Resposta</span>
           </button>
 

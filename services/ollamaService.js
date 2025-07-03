@@ -370,7 +370,7 @@ Seja conciso, direto e didático. Foque na solução prática.`;
   /**
    * TESTE: Função para debug - retorna Olá Mundo
    */
-  async testeOlaMundo(problem) {
+  async soResposta(problem) {
     console.log('🚨🚨🚨 testeOlaMundo MODIFICADO! Chamando Gemma para resposta apenas!');
     console.log('🚨 Problem recebido:', problem);
     
