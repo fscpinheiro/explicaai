@@ -150,7 +150,7 @@ class Collection {
     }
 
     try {
-      console.log('🔍 [DEBUG] Query SQL executada:', sql);
+      
       const collections = await this.db.all(sql, params);
       
       // ✅ DEBUG: Verificar contadores reais vs query
@@ -161,7 +161,7 @@ class Collection {
             'SELECT COUNT(*) as count FROM problem_collections WHERE collection_id = ?', 
             [collection.id]
           );
-          console.log(`🔍 [DEBUG] Favoritos - Count da query: ${collection.problem_count}, Count real: ${realCount.count}`);
+          
           
           // Verificar se há registros órfãos
           const orphanCheck = await this.db.get(
@@ -171,7 +171,7 @@ class Collection {
             WHERE pc.collection_id = ? AND p.id IS NULL`,
             [collection.id]
           );
-          console.log(`🔍 [DEBUG] Favoritos - Registros órfãos: ${orphanCheck.count}`);
+          
         }
       }
       
@@ -252,7 +252,6 @@ class Collection {
       }
 
       await this.logAction('update_collection', id, data);
-      console.log(`✏️ Coleção atualizada: ID ${id}`);
       
       return await this.findById(id);
     } catch (error) {

@@ -188,7 +188,9 @@ function App() {
   }
 
   const handleExplain = async (resultData) => {
-    console.log('Problema explicado:', resultData)
+    console.log('🔍 [FRONTEND] Resultado recebido:', resultData)
+    console.log('🔍 [FRONTEND] Type:', resultData.type)
+    console.log('🔍 [FRONTEND] SubType que será definido:', resultData.type)
     
     // Mostrar resultado
     setResult({
@@ -316,8 +318,24 @@ function App() {
     return `${minutes}m ${remainingSeconds}s`
   }
 
-  const formatExplanation = (text) => {
-    // Quebrar texto por linhas e formatar
+  const formatExplanation = (text, type = 'detailed') => {
+    console.log('🔍 [FORMAT] Text:', text?.substring(0, 50) + '...')
+    console.log('🔍 [FORMAT] Type recebido:', type)
+    console.log('🔍 [FORMAT] Comparação type === "answer":', type === 'answer')
+
+    if (type === 'answer') {
+      console.log('✅ [FORMAT] ENTRANDO no modo ANSWER!')
+      return (
+        <div className="text-center">
+          <div className="text-3xl font-bold text-green-600 mb-2">
+            {text.trim()}
+          </div>
+          <p className="text-sm text-gray-500">Resultado final</p>
+        </div>
+      )
+    }
+    console.log('🔍 [FORMAT] Usando formatação DETAILED')
+    
     return text.split('\n').map((line, index) => {
       if (line.startsWith('**') && line.endsWith('**')) {
         // Títulos em negrito
@@ -475,14 +493,9 @@ function App() {
   }
 
   const notifyCollectionsChanged = () => {
-    console.log('🔔 [DEBUG] notifyCollectionsChanged() CHAMADA!')
-    console.log('🔔 [DEBUG] Disparando evento collectionsUpdated...')
-
-    window.dispatchEvent(new CustomEvent('collectionsUpdated'))
     
-    console.log('🔔 [DEBUG] Evento disparado, iniciando setTimeout...')
+    window.dispatchEvent(new CustomEvent('collectionsUpdated'))
     setTimeout(() => {
-      console.log('🔔 [DEBUG] setTimeout executado, chamando loadHistory...')
       loadHistory()
     }, 100)
 
@@ -549,7 +562,7 @@ function App() {
               {/* Explicação */}
               <div className="bg-gray-50 p-6 rounded-xl">
                 <div className="prose prose-lg max-w-none">
-                  {formatExplanation(result.explanation)}
+                  {formatExplanation(result.explanation, result.subType || 'detailed')}
                 </div>
               </div>
             </div>
@@ -558,6 +571,7 @@ function App() {
 
         {/* ✅ MODO INPUT - Card principal (apenas quando não está no histórico ou coleção) */}
         {viewMode === 'input' && (
+          <>
           <MathInput
             onExplain={handleExplain}
             onGenerateSimilar={handleGenerateSimilar}
@@ -565,8 +579,25 @@ function App() {
             isLoading={isLoading}
             setIsLoading={setIsLoading}
           />
+          {/* BOTÃO TEMPORÁRIO */}
+          {result && (
+            <div className="text-center mb-4">
+              <button
+                onClick={() => {
+                  console.log('🧹 Limpando resultado...')
+                  setResult(null)
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                🧹 Limpar Resultado (Debug)
+              </button>
+            </div>
+          )}
+        </>
         )}
 
+        
+        
         {/* Loading */}
         {isLoading && (
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 text-center">
@@ -586,7 +617,9 @@ function App() {
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-800">
                 {result.type === 'explanation' 
-                  ? (result.subType === 'brief' ? '📋 Explicação Resumida' : '📋 Explicação Passo a Passo')
+                  ? (result.subType === 'answer' ? '✅ Resposta Final' : 
+                    result.subType === 'brief' ? '📋 Explicação Resumida' : 
+                    '📋 Explicação Passo a Passo')
                   : '🎯 Problemas Similares'
                 }
               </h3>
@@ -634,7 +667,7 @@ function App() {
                 {/* Explicação */}
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <div className="prose prose-sm max-w-none">
-                    {formatExplanation(result.explanation)}
+                    {formatExplanation(result.explanation, result.subType || 'detailed')}
                   </div>
                 </div>
 

@@ -90,10 +90,10 @@ app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
 // Middleware de log para debug
-app.use((req, res, next) => {
-  console.log(`📍 ${req.method} ${req.path}`);
-  next();
-});
+//app.use((req, res, next) => {
+//  console.log(`📍 ${req.method} ${req.path}`);
+//  next();
+//});
 
 // Criar pastas necessárias
 if (createDirectories) {

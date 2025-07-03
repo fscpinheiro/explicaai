@@ -185,6 +185,35 @@ Certifique-se de que os exercícios sejam interessantes e realistas.`;
   }
 
   /**
+   * Criar prompt para apenas a resposta
+   */
+  createAnswerOnlyPrompt(problem) {
+    console.log('🚨 createAnswerOnlyPrompt chamada com:', problem);
+    const prompt = `${problem}
+
+  RESPOSTA FINAL (APENAS O RESULTADO):`;
+    console.log('🚨 Prompt criado:', prompt);
+    return prompt;
+  }
+
+  /**
+   * Explicar problema matemático - APENAS RESPOSTA
+   */
+  async explainMathAnswerOnly(problem) {
+    console.log('🚨🚨🚨 FUNÇÃO explainMathAnswerOnly CHAMADA!');
+    console.log('🚨 Problem recebido:', problem);
+    
+    const prompt = this.createAnswerOnlyPrompt(problem);
+    console.log('🚨 Prompt gerado:', prompt);
+    
+    const result = await this.generate(prompt);
+    
+    console.log(`📝 Problema respondido apenas: "${truncateText(problem)}" em ${result.elapsedTime}s`);
+    
+    return result;
+  }
+
+  /**
    * Criar prompt para análise de imagens
    */
   createImagePrompt() {
@@ -336,6 +365,55 @@ Seja conciso, direto e didático. Foque na solução prática.`;
     console.log(`📷 Imagem analisada em ${result.elapsedTime}s`);
     
     return result;
+  }
+
+  /**
+   * TESTE: Função para debug - retorna Olá Mundo
+   */
+  async testeOlaMundo(problem) {
+    console.log('🚨🚨🚨 testeOlaMundo MODIFICADO! Chamando Gemma para resposta apenas!');
+    console.log('🚨 Problem recebido:', problem);
+    
+    // ✅ NOVO: Criar prompt específico para apenas resposta
+    const prompt = `Resolva este problema de matemática e me dê APENAS a resposta final, sem explicações:
+
+${problem}
+
+RESPOSTA:`;
+    
+    console.log('🚨 Prompt para Gemma:', prompt);
+    
+    try {
+      // ✅ NOVO: Chamar o Gemma de verdade
+      const result = await this.generate(prompt, null, {
+        temperature: 0.1, // Mais determinístico para respostas diretas
+        top_p: 0.8
+      });
+      
+      console.log('🚨 Resposta do Gemma:', result.response);
+      
+      // ✅ NOVO: Limpar a resposta (remover quebras de linha extras, etc.)
+      const cleanResponse = result.response.trim().replace(/^(Resposta:|RESPOSTA:)/i, '').trim();
+      
+      const finalResult = {
+        response: cleanResponse,
+        elapsedTime: result.elapsedTime,
+        model: this.model
+      };
+      
+      console.log('🚨 Resultado final processado:', finalResult);
+      return finalResult;
+      
+    } catch (error) {
+      console.error('❌ Erro ao chamar Gemma:', error);
+      
+      // ✅ Fallback em caso de erro
+      return {
+        response: "Erro ao conectar com o Gemma. Verifique se o Ollama está rodando.",
+        elapsedTime: 0,
+        model: this.model
+      };
+    }
   }
 }
 

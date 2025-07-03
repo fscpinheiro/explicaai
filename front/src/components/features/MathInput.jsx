@@ -297,6 +297,7 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
 
   // Função para explicar problema (conecta com API real)
    const handleExplain = async (type = 'detailed') => {
+    console.log('🚨 [FRONTEND] Iniciando handleExplain com type:', type)
     if (!problem.trim()) {
       alert('Por favor, digite um problema de matemática.')
       return
@@ -305,19 +306,24 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
     setIsLoading(true)
 
     try {
-      // ✅ NOVO: Apenas explicar, sem salvar automaticamente
+      console.log('🚨 [FRONTEND] Fazendo fetch para /api/explain-text')
+      console.log('🚨 [FRONTEND] Body da request:', { 
+        problem: problem.trim(),
+        type: type
+      })
       const response = await fetch('/api/explain-text', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          problem: problem.trim()
+          problem: problem.trim(),
+          type: type
         }),
       })
-
+      console.log('🚨 [FRONTEND] Response status:', response.status)
       const data = await response.json()
-
+      console.log('🚨 [FRONTEND] Response data:', data)
       if (data.success) {
         // ✅ NOVO: Mostrar resultado temporário (não salvo)
         onExplain({
@@ -504,12 +510,46 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
 
           {/* Explicação Resumida */}
           <button
-            onClick={() => handleExplain('brief')}
+            onClick={async () => {
+              try {
+                console.log('🚨 Testando API...');
+                
+                const response = await fetch('/api/problems/teste-ola-mundo', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ 
+                    problem:  problem.trim() 
+                  }),
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                  onExplain({
+                    type: 'answer',
+                    problem: {
+                      text: problem.trim(),
+                      is_favorite: false,
+                      id: null
+                    },
+                    explanation: data.explanation,
+                    processingTime: data.processingTime || 0,
+                    isTemporary: true
+                  })
+                  setProblem('')
+                } else {
+                  alert('Erro: ' + (data.message || data.error))
+                }
+              } catch (error) {
+                alert(`❌ ERRO: ${error.message}`);
+              }
+            }}
             disabled={!problem.trim() || isLoading}
             className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <BookOpen className="w-5 h-5" />
-            <span>Resumido</span>
+            <span>Só Resposta</span>
           </button>
 
           {/* Explicação Passo a Passo */}

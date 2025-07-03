@@ -401,6 +401,12 @@ router.post('/explain-text',
   asyncHandler(async (req, res) => {
     const { text, type = 'detailed', collectionIds } = req.body;
 
+    console.log('🚨 CHEGOU NA FUNÇÃO /explain-text!');
+    console.log('🚨 Type recebido:', type);
+    console.log('🚨 Text recebido:', text);
+
+    console.log('🔍 [DEBUG] Dados recebidos:');
+
     // Validar texto
     const textValidation = validateProblemText(text);
     if (!textValidation.valid) {
@@ -421,17 +427,24 @@ router.post('/explain-text',
 
       // Auto-categorização
       const categorizationService = require('../services/categorizationService');
-      
       const analysis = categorizationService.analyzeComplete(textValidation.text);
 
       // Explicar com Gemma (dois tipos)
       let explanation;
+      console.log('🔍 [BACKEND] Decidindo tipo de explicação:', type);
+
       if (type === 'brief') {
+        console.log('🔍 [BACKEND] ✅ USANDO explainMathBrief');
         explanation = await ollamaService.explainMathBrief(textValidation.text);
+      } else if (type === 'answer') {
+        console.log('🔍 [BACKEND] ✅ USANDO explainMathAnswerOnly');
+        explanation = await ollamaService.explainMathAnswerOnly(textValidation.text);
       } else {
+        console.log('🔍 [BACKEND] ✅ USANDO explainMath (detailed)');
         explanation = await ollamaService.explainMath(textValidation.text);
       }
 
+      console.log('🔍 [BACKEND] Resposta recebida do Gemma:', explanation.response.substring(0, 50) + '...');
       // Definir coleções (auto-sugestão se não especificado)
       let finalCollectionIds = collectionIds || [];
       if (finalCollectionIds.length === 0) {
@@ -477,7 +490,7 @@ router.post('/explain-text',
           difficulty: analysis.difficulty,
           tags: analysis.tags
         }
-      }, `Problema ${type === 'brief' ? 'resumido' : 'explicado passo a passo'} e salvo!`));
+      }, `Problema ${type === 'brief' ? 'resumido' : type === 'answer' ? 'respondido' : 'explicado passo a passo'} e salvo!`));
 
     } catch (error) {
       console.error('❌ Erro ao explicar problema:', error.message);
@@ -489,6 +502,31 @@ router.post('/explain-text',
     }
   })
 );
+
+/**
+ * POST /api/problems/teste-ola-mundo
+ * TESTE: Endpoint para debug
+ */
+router.post('/teste-ola-mundo', asyncHandler(async (req, res) => {
+  console.log('🚨🚨🚨 CHEGOU NA ROTA TESTE!');
+  console.log('🚨 Body recebido:', req.body);
+
+  try {
+    const ollamaService = require('../services/ollamaService');
+    const resultado = await ollamaService.testeOlaMundo(req.body.problem);
+    
+    console.log('🚨 Resultado do service:', resultado);
+    
+    res.json({
+      success: true,
+      explanation: resultado.response,
+      processingTime: resultado.elapsedTime
+    });
+  } catch (error) {
+    console.error('❌ Erro:', error);
+    res.status(500).json({ error: error.message });
+  }
+}));
 
 /**
  * POST /api/problems/generate-similar
