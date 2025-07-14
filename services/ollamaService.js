@@ -305,49 +305,29 @@ Use linguagem clara e didática para estudantes.`;
    * TESTE: Função para debug - retorna Olá Mundo
    */
   async soResposta(problem) {
-    console.log('🚨🚨🚨 testeOlaMundo MODIFICADO! Chamando Gemma para resposta apenas!');
-    console.log('🚨 Problem recebido:', problem);
+    console.log('🚨 SOLUÇÃO DRAMÁTICA: Passo a passo interno!');
     
-    // ✅ NOVO: Criar prompt específico para apenas resposta
-    const prompt = `Resolva este problema de matemática e me dê APENAS a resposta final, sem explicações:
-
-${problem}
-
-RESPOSTA:`;
+    const fullResult = await this.explainMath(problem);
     
-    console.log('🚨 Prompt para Gemma:', prompt);
+    const extractFinalAnswer = (fullText) => {
+        const finalMatch = fullText.match(/RESPOSTA FINAL:\s*(.+?)(?:\n|$)/i);
+        if (finalMatch) {
+            return finalMatch[1].trim();
+        }
+        
+        const xMatch = fullText.match(/x\s*=\s*[^\n]+/gi);
+        if (xMatch && xMatch.length > 0) {
+            return xMatch[xMatch.length - 1].trim(); 
+        }
+        
+        return "Não foi possível extrair a resposta";
+    };
     
-    try {
-      // ✅ NOVO: Chamar o Gemma de verdade
-      const result = await this.generate(prompt, null, {
-        temperature: 0.1, // Mais determinístico para respostas diretas
-        top_p: 0.8
-      });
-      
-      console.log('🚨 Resposta do Gemma:', result.response);
-      
-      // ✅ NOVO: Limpar a resposta (remover quebras de linha extras, etc.)
-      const cleanResponse = result.response.trim().replace(/^(Resposta:|RESPOSTA:)/i, '').trim();
-      
-      const finalResult = {
-        response: cleanResponse,
-        elapsedTime: result.elapsedTime,
+    return {
+        response: extractFinalAnswer(fullResult.response),
+        elapsedTime: fullResult.elapsedTime,
         model: this.model
-      };
-      
-      console.log('🚨 Resultado final processado:', finalResult);
-      return finalResult;
-      
-    } catch (error) {
-      console.error('❌ Erro ao chamar Gemma:', error);
-      
-      // ✅ Fallback em caso de erro
-      return {
-        response: "Erro ao conectar com o Gemma. Verifique se o Ollama está rodando.",
-        elapsedTime: 0,
-        model: this.model
-      };
-    }
+    };
   }
 }
 

@@ -2,11 +2,11 @@ Lista de Tarefas - ExplicaAI
 
 📋 TAREFAS PARA IMPLEMENTAR AGORA
 
-1. ✅ Corrigir Inconsistência nas Respostas (CRÍTICO)
+COMPLETO | 1. ✅ Corrigir Inconsistência nas Respostas (CRÍTICO)
 Resumo: Implementar prompt com verificação automática que força o modelo a conferir o resultado substituindo na equação original. Garantir que respostas sejam consistentes entre "Só Resposta" e "Passo a Passo".
 ⏱️ 4-6 horas
 
-2. 🎨 Layout em Cards/Etapas (Impacto Visual)
+COMPLETO | 2. 🎨 Layout em Cards/Etapas (Impacto Visual)
 Resumo: Criar parser inteligente que divide a explicação em etapas visuais (cards separados). Cada passo fica em um card individual com título, conteúdo e resultado, melhorando drasticamente a experiência visual.
 ⏱️ 8-12 horas
 
@@ -28,6 +28,9 @@ Resumo: Tela de configurações com série escolar, nome do estudante, temas de 
 
 7. Implementar botão para explicar melhor uma parte da solução (após a implementação do layout de resposta)
 
+8. Implementar funcionadade de não mostrar todos os passos, e nem a resposta, e um botão de mostrar passo seguinte quando o problema for resolvido passo a passo.
+
+9. Quando o problema for resolvido apenas para mostrar a resposta, ele deve mostrar a opção de resolver passo a passo.
 
 ------------------------------------------------------------------------------------------------------------------
 🔬 ESTUDAR PARA IMPLEMENTAR DEPOIS
