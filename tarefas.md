@@ -10,7 +10,7 @@ Resumo: Implementar prompt com verificação automática que força o modelo a c
 Resumo: Criar parser inteligente que divide a explicação em etapas visuais (cards separados). Cada passo fica em um card individual com título, conteúdo e resultado, melhorando drasticamente a experiência visual.
 ⏱️ 8-12 horas
 
-3. 🔧 Botão Trocar Categoria (Bug Fix)
+COMPLETO | 3. 🔧 Botão Trocar Categoria (Bug Fix)
 Resumo: Corrigir funcionalidade do botão com setinhas que permite trocar problema de coleção. Atualmente não funciona nem na lista nem quando problema está aberto para estudo.
 ⏱️ 2-3 horas
 

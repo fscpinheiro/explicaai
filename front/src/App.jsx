@@ -510,9 +510,14 @@ function App() {
   const handleConfirmChangeCollection = async (newCollectionId) => {
     const { problemId, currentCollectionId } = changeCategoryModal
     
-    if (!problemId || !newCollectionId) return
+    if (!problemId || !newCollectionId) {
+      console.error('❌ IDs inválidos:', { problemId, newCollectionId })
+      return
+    }
 
     try {
+      console.log('🔄 Movendo problema', problemId, 'para coleção', newCollectionId)
+      
       // Usar endpoint para atualizar coleções do problema
       const response = await fetch(`/api/problems/${problemId}/collections`, {
         method: 'PUT',
@@ -527,12 +532,17 @@ function App() {
       const data = await response.json()
 
       if (data.success) {
-        // Recarregar a lista da coleção atual
-        if (currentCollectionId) {
-          loadCollectionProblems(currentCollectionId)
+        console.log('✅ Problema movido com sucesso!')
+        
+        // Recarregar a lista da coleção atual se estamos numa coleção
+        if (currentCollectionId && viewMode === 'collection') {
+          await loadCollectionProblems(currentCollectionId)
         }
         
-        // Notificar mudança
+        // Recarregar histórico geral
+        await loadHistory()
+        
+        // Notificar mudança para sidebar
         notifyCollectionsChanged()
         
         // Fechar modal
@@ -543,11 +553,12 @@ function App() {
           currentCollectionId: null
         })
         
-        console.log('✅ Problema movido para nova coleção!')
       } else {
+        console.error('❌ Erro da API:', data)
         alert('Erro ao mover problema: ' + (data.message || data.error))
       }
     } catch (error) {
+      console.error('❌ Erro de rede:', error)
       alert('Erro ao mover problema: ' + error.message)
     }
   }
@@ -1186,11 +1197,35 @@ function App() {
         isLoading={deleteModal.isLoading}
       />
       <CollectionSelectorModal
-  isOpen={collectionModal.isOpen}
-  onSelect={handleSaveToCollection}
-  onCancel={cancelSaveToCollection}
-  problemText={collectionModal.problemText}
-/>
+        isOpen={collectionModal.isOpen}
+        onSelect={handleSaveToCollection}
+        onCancel={cancelSaveToCollection}
+        problemText={collectionModal.problemText}
+      />
+       <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onConfirm={confirmDeleteProblem}
+        onCancel={cancelDeleteProblem}
+        problemText={deleteModal.problemText}
+        isLoading={deleteModal.isLoading}
+      />
+      
+      <CollectionSelectorModal
+        isOpen={collectionModal.isOpen}
+        onSelect={handleSaveToCollection}
+        onCancel={cancelSaveToCollection}
+        problemText={collectionModal.problemText}
+        mode="save"
+      />
+
+      <CollectionSelectorModal
+        isOpen={changeCategoryModal.isOpen}
+        onSelect={handleConfirmChangeCollection}
+        onCancel={handleCancelChangeCollection}
+        problemText={changeCategoryModal.problemText}
+        currentCollectionId={changeCategoryModal.currentCollectionId}
+        mode="move"
+      />
     </Layout>
   )
 
