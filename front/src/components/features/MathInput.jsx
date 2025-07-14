@@ -297,59 +297,65 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
 
   // Função para explicar problema (conecta com API real)
    const handleExplain = async (type = 'detailed') => {
-    console.log('🚨 [FRONTEND] Iniciando handleExplain com type:', type)
-    if (!problem.trim()) {
-      alert('Por favor, digite um problema de matemática.')
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      console.log('🚨 [FRONTEND] Fazendo fetch para /api/explain-text')
-      console.log('🚨 [FRONTEND] Body da request:', { 
-        problem: problem.trim(),
-        type: type
-      })
-      const response = await fetch('/api/explain-text', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          problem: problem.trim(),
-          type: type
-        }),
-      })
-      console.log('🚨 [FRONTEND] Response status:', response.status)
-      const data = await response.json()
-      console.log('🚨 [FRONTEND] Response data:', data)
-      if (data.success) {
-        // ✅ NOVO: Mostrar resultado temporário (não salvo)
-        onExplain({
-          type: type,
-          problem: {
-            text: problem.trim(),
-            is_favorite: false, // Não está salvo ainda
-            id: null // Não tem ID ainda
-          },
-          explanation: data.explanation,
-          processingTime: data.processingTime || 0,
-          autoCategory: data.autoCategory || null,
-          isTemporary: true // ✅ Flag para indicar que não está salvo
-        })
-
-        // Limpar input
-        setProblem('')
-      } else {
-        alert('Erro: ' + (data.message || data.error))
+      console.log('🚨 [FRONTEND] Iniciando handleExplain com type:', type)
+      if (!problem.trim()) {
+        alert('Por favor, digite um problema de matemática.')
+        return
       }
-    } catch (error) {
-      alert('Erro ao conectar com o servidor: ' + error.message)
-    } finally {
-      setIsLoading(false)
+
+      setIsLoading(true)
+
+      try {
+        console.log('🚨 [FRONTEND] Fazendo fetch para /api/problems/explain-text')
+        console.log('🚨 [FRONTEND] Body da request:', { 
+          text: problem.trim(), // ✅ USAR 'text' aqui
+          type: type
+        })
+        
+        const response = await fetch('/api/problems/explain-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            text: problem.trim(), // ✅ CORRETO: usar 'text'
+            type: type
+          }),
+        })
+        
+        console.log('🚨 [FRONTEND] Response status:', response.status)
+        const data = await response.json()
+        console.log('🚨 [FRONTEND] Response data:', data)
+        
+        if (data.success) {
+          // ✅ VERIFICAR SE É RESPOSTA ESTRUTURADA
+          // const isStructured = isStructuredResponse(data.explanation)
+          // console.log('📝 [FRONTEND] Resposta estruturada:', isStructured)
+          
+          onExplain({
+            type: type,
+            // isStructured: isStructured,
+            problem: {
+              text: problem.trim(),
+              is_favorite: false,
+              id: null
+            },
+            explanation: data.explanation,
+            processingTime: data.processingTime || 0,
+            autoCategory: data.autoCategory || null,
+            isTemporary: true
+          })
+
+          setProblem('')
+        } else {
+          alert('Erro: ' + (data.message || data.error))
+        }
+      } catch (error) {
+        alert('Erro ao conectar com o servidor: ' + error.message)
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }
 
   // Função para gerar similares (preparada para quando a API estiver pronta)
   const handleGenerateSimilar = async () => {

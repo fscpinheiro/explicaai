@@ -133,55 +133,54 @@ class OllamaService {
    * Criar prompt para explicação matemática
    */
   createMathPrompt(problem) {
-    return `Você é um professor de matemática muito didático e paciente. Um estudante precisa de ajuda com este problema:
+    return `Você é um professor de matemática muito didático. Resolva este problema seguindo EXATAMENTE o formato abaixo:
 
-"${problem}"
+  PROBLEMA: "${problem}"
 
-Por favor, explique a solução seguindo este formato:
+  PASSO 1: [Título claro do primeiro passo]
+  Explicação: [Explique o que fazer e por quê]
+  Cálculo: [Mostre a operação matemática]
+  Resultado: [Resultado deste passo]
 
-**Análise do Problema:**
-[Identifique que tipo de problema é e o que está sendo pedido]
+  PASSO 2: [Título claro do segundo passo]
+  Explicação: [Explique o que fazer e por quê]
+  Cálculo: [Mostre a operação matemática]
+  Resultado: [Resultado deste passo]
 
-**Solução Passo a Passo:**
-1. [Primeiro passo com explicação clara]
-2. [Segundo passo com justificativa]
-3. [Continue até resolver completamente]
+  [Continue com PASSO 3, PASSO 4, etc conforme necessário]
 
-**Verificação:**
-[Confirme se a resposta está correta substituindo valores]
+  VERIFICAÇÃO:
+  Explicação: [Substitua o resultado na equação original para confirmar]
+  Cálculo: [Mostre a verificação]
+  Resultado: [Confirmação se está correto]
 
-**Resposta Final:**
-[Destaque a resposta de forma clara]
+  RESPOSTA FINAL: [Destaque a resposta de forma clara]
 
-Use linguagem simples e didática, como se estivesse explicando para um estudante do ensino médio. Seja encorajador e paciente.`;
+  IMPORTANTE:
+  - Use EXATAMENTE os rótulos "PASSO X:", "Explicação:", "Cálculo:", "Resultado:"
+  - Seja claro e didático
+  - Sempre inclua a VERIFICAÇÃO
+  - Mantenha cada passo simples e focado`;
   }
 
   /**
-   * Criar prompt para exercícios similares
+   * ✅ ADICIONAR: Função que estava faltando
    */
-  createSimilarPrompt(originalProblem) {
-    return `Baseado neste problema de matemática: "${originalProblem}"
+  async explainMathAnswerOnly(problem) {
+    const prompt = `Resolva este problema de matemática e me dê APENAS a resposta final, sem explicações:
 
-Crie 3 exercícios similares que:
-- Sejam do mesmo tipo e nível de dificuldade
-- Usem números diferentes
-- Mantenham a mesma estrutura de raciocínio
-- Sejam adequados para praticar o mesmo conceito
+  ${problem}
 
-FORMATO DA RESPOSTA:
-**Exercício 1:**
-[Problema similar com números diferentes]
-
-**Exercício 2:**
-[Outro problema similar]
-
-**Exercício 3:**
-[Terceiro problema similar]
-
-**Dica de Estudo:**
-[Uma dica sobre como abordar este tipo de problema]
-
-Certifique-se de que os exercícios sejam interessantes e realistas.`;
+  RESPOSTA:`;
+    
+    const result = await this.generate(prompt, null, {
+      temperature: 0.1, // Mais determinístico para respostas diretas
+      top_p: 0.8
+    });
+    
+    console.log(`⚡ Resposta rápida: "${this.truncateText ? this.truncateText(problem) : problem.substring(0, 50)}..." em ${result.elapsedTime}s`);
+    
+    return result;
   }
 
 
@@ -272,17 +271,11 @@ Use linguagem clara e didática para estudantes.`;
     const prompt = this.createMathPrompt(problem);
     const result = await this.generate(prompt);
     
-    console.log(`📝 Problema detalhado: "${this.truncateText ? this.truncateText(problem) : problem.substring(0, 50)}..." em ${result.elapsedTime}s`);
+    console.log(`📝 Problema estruturado: "${this.truncateText ? this.truncateText(problem) : problem.substring(0, 50)}..." em ${result.elapsedTime}s`);
     
     return result;
   }
-
-  /**
-   * Criar prompt MELHORADO para explicação detalhada
-   */
-  createMathPrompt(problem) {
-    return `Resolva este problema de matemática passo a passo: ${problem}`;
-  }
+ 
 
   /**
    * Gerar exercícios similares

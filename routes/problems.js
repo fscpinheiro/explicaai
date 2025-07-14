@@ -405,8 +405,6 @@ router.post('/explain-text',
     console.log('🚨 Type recebido:', type);
     console.log('🚨 Text recebido:', text);
 
-    console.log('🔍 [DEBUG] Dados recebidos:');
-
     // Validar texto
     const textValidation = validateProblemText(text);
     if (!textValidation.valid) {
@@ -429,26 +427,26 @@ router.post('/explain-text',
       const categorizationService = require('../services/categorizationService');
       const analysis = categorizationService.analyzeComplete(textValidation.text);
 
-      // Explicar com Gemma (dois tipos)
+      // ✅ USAR NOVOS MÉTODOS DO OLLAMA SERVICE
       let explanation;
       console.log('🔍 [BACKEND] Decidindo tipo de explicação:', type);
 
       if (type === 'brief') {
-        console.log('🔍 [BACKEND] ✅ USANDO explainMathBrief');
-        explanation = await ollamaService.explainMathBrief(textValidation.text);
+        console.log('🔍 [BACKEND] ✅ USANDO explainMathBrief (ainda não implementado)');
+        explanation = await ollamaService.explainMath(textValidation.text); // Usar structured por enquanto
       } else if (type === 'answer') {
         console.log('🔍 [BACKEND] ✅ USANDO explainMathAnswerOnly');
         explanation = await ollamaService.explainMathAnswerOnly(textValidation.text);
       } else {
-        console.log('🔍 [BACKEND] ✅ USANDO explainMath (detailed)');
+        console.log('🔍 [BACKEND] ✅ USANDO explainMath (detailed structured)');
         explanation = await ollamaService.explainMath(textValidation.text);
       }
 
-      console.log('🔍 [BACKEND] Resposta recebida do Gemma:', explanation.response.substring(0, 50) + '...');
+      console.log('🔍 [BACKEND] Resposta recebida do Gemma:', explanation.response.substring(0, 100) + '...');
+
       // Definir coleções (auto-sugestão se não especificado)
       let finalCollectionIds = collectionIds || [];
       if (finalCollectionIds.length === 0) {
-        // Buscar coleção sugerida pela auto-categorização
         const suggestedCollection = await req.db.get(
           "SELECT id FROM collections WHERE name = ?",
           [analysis.suggestedCollection]
@@ -456,7 +454,6 @@ router.post('/explain-text',
         if (suggestedCollection) {
           finalCollectionIds = [suggestedCollection.id];
         } else {
-          // Fallback para Favoritos
           const favoriteCollection = await req.db.get(
             "SELECT id FROM collections WHERE name = 'Favoritos'"
           );

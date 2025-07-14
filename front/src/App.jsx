@@ -4,6 +4,9 @@ import Layout from './components/layout/Layout'
 import MathInput from './components/features/MathInput'
 import DeleteConfirmationModal from './components/ui/DeleteConfirmationModal'
 import CollectionSelectorModal from './components/ui/CollectionSelectorModal'
+import StepCard from './components/ui/StepCard'
+import { parseStructuredMathResponse, isStructuredResponse, extractFinalAnswer } from './utils/mathParser'
+
 
 function App() {
   const [isLoading, setIsLoading] = useState(false)
@@ -209,6 +212,7 @@ function App() {
     setViewMode('input')
     setShowHistory(false)
   }
+
 
   const handleGenerateSimilar = async (resultData) => {
     console.log('Similares gerados:', resultData)
@@ -442,34 +446,55 @@ function App() {
   const formatExplanation = (text, type = 'detailed') => {
     console.log('🔍 [FORMAT] Text:', text?.substring(0, 50) + '...')
     console.log('🔍 [FORMAT] Type recebido:', type)
-    console.log('🔍 [FORMAT] Comparação type === "answer":', type === 'answer')
 
     if (type === 'answer') {
       console.log('✅ [FORMAT] ENTRANDO no modo ANSWER!')
+      const finalAnswer = extractFinalAnswer(text)
       return (
         <div className="text-center">
           <div className="text-3xl font-bold text-green-600 mb-2">
-            {text.trim()}
+            {finalAnswer}
           </div>
           <p className="text-sm text-gray-500">Resultado final</p>
         </div>
       )
     }
-    console.log('🔍 [FORMAT] Usando formatação DETAILED')
 
+    console.log('🔍 [FORMAT] Verificando se é resposta estruturada...')
+    
+    // ✅ NOVO: Verificar se resposta está estruturada
+    if (isStructuredResponse(text)) {
+      console.log('✅ [FORMAT] Resposta estruturada detectada!')
+      
+      const steps = parseStructuredMathResponse(text)
+      
+      return (
+        <div className="space-y-6">
+          {steps.map((step, index) => (
+            <StepCard 
+              key={index}
+              step={step}
+              index={index}
+              isLast={index === steps.length - 1}
+            />
+          ))}
+        </div>
+      )
+    }
+    
+    // ✅ FALLBACK: Formato antigo (mantém compatibilidade)
+    console.log('⚠️ [FORMAT] Usando formatação legacy')
+    
     return text.split('\n').map((line, index) => {
       if (line.startsWith('**') && line.endsWith('**')) {
-        // Títulos em negrito
         return (
           <h4 key={index} className="font-bold text-gray-800 mt-4 mb-2 first:mt-0">
             {line.replace(/\*\*/g, '')}
           </h4>
         )
       } else if (line.trim() === '') {
-        // Linhas vazias
         return <br key={index} />
       } else {
-        // Texto normal
         return (
           <p key={index} className="text-gray-700 mb-2">
             {line}

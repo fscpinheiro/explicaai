@@ -26,6 +26,9 @@ Resumo: Implementar funcionalidade de verificação/revisão que permite conferi
 Resumo: Tela de configurações com série escolar, nome do estudante, temas de cor, nível de dificuldade preferido. Personalizar experiência baseada no perfil do usuário para melhor pedagogia.
 ⏱️ 10-15 horas
 
+7. Implementar botão para explicar melhor uma parte da solução (após a implementação do layout de resposta)
+
+
 ------------------------------------------------------------------------------------------------------------------
 🔬 ESTUDAR PARA IMPLEMENTAR DEPOIS
 
