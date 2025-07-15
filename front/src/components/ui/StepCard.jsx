@@ -1,10 +1,15 @@
 import { HelpCircle, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-const StepCard = ({ step, index, isLast }) => {
+const StepCard = ({ step, index, isLast, onExplainStep }) => {
   const handleExplainStep = () => {
-    alert('🚧 Funcionalidade "Explicar Passo Detalhadamente" será implementada em breve!\n\nEsta feature permitirá aprofundar cada etapa da resolução.')
-  }
+    const concept = step.titulo.toLowerCase().includes('isol') ? 'Isolamento de Variável' :
+                    step.titulo.toLowerCase().includes('verific') ? 'Verificação de Resultado' :
+                    step.titulo.toLowerCase().includes('calcul') ? 'Operações Matemáticas' :
+                    'Conceito Matemático'
+    
+    onExplainStep(step.titulo, step.explicacao, concept)
+    }
 
   // Cores diferentes para tipos de passo
   const getStepColor = (type) => {

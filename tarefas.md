@@ -18,7 +18,7 @@ COMPLETO | 4. ✨ Gerar Similares na Lista
 Resumo: Adicionar botão "Gerar Similares" em cada card da lista de problemas salvos e também na tela de estudo individual. Permite criar exercícios similares a partir de qualquer problema já resolvido.
 ⏱️ 4-6 horas
 
-5. 🔍 Prova dos Nove
+COMPLETO | 5. 🔍 Prova dos Nove
 Resumo: Implementar funcionalidade de verificação/revisão que permite conferir se a resposta está correta substituindo o resultado na equação original. Modal dedicada ou seção especial para esta verificação.
 ⏱️ 6-8 horas
 
@@ -26,11 +26,13 @@ Resumo: Implementar funcionalidade de verificação/revisão que permite conferi
 Resumo: Tela de configurações com série escolar, nome do estudante, temas de cor, nível de dificuldade preferido. Personalizar experiência baseada no perfil do usuário para melhor pedagogia.
 ⏱️ 10-15 horas
 
-7. Implementar botão para explicar melhor uma parte da solução (após a implementação do layout de resposta)
+COMPLETO | 7. Implementar botão para explicar melhor uma parte da solução (após a implementação do layout de resposta)
 
 8. Implementar funcionadade de não mostrar todos os passos, e nem a resposta, e um botão de mostrar passo seguinte quando o problema for resolvido passo a passo.
 
 9. Quando o problema for resolvido apenas para mostrar a resposta, ele deve mostrar a opção de resolver passo a passo.
+
+10. Mudar a forma do loading, ver se é possivel cancelar, e adicionar uma animação ou ainda deixar ele sobre a tela no centro.
 
 ------------------------------------------------------------------------------------------------------------------
 🔬 ESTUDAR PARA IMPLEMENTAR DEPOIS

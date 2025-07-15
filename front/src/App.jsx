@@ -6,6 +6,7 @@ import DeleteConfirmationModal from './components/ui/DeleteConfirmationModal'
 import CollectionSelectorModal from './components/ui/CollectionSelectorModal'
 import StepCard from './components/ui/StepCard'
 import { parseStructuredMathResponse, isStructuredResponse, extractFinalAnswer } from './utils/mathParser'
+import ExplanationDrawer from './components/ui/ExplanationDrawer'
 
 
 function App() {
@@ -31,6 +32,14 @@ function App() {
     isOpen: false,
     problemId: null,
     problemText: '',
+    isLoading: false
+  })
+
+  const [explanationDrawer, setExplanationDrawer] = useState({
+    isOpen: false,
+    stepTitle: '',
+    stepExplanation: '',
+    concept: '',
     isLoading: false
   })
 
@@ -226,6 +235,35 @@ function App() {
 
     setViewMode('input')
     setShowHistory(false)
+  }
+
+  const handleExplainStep = async (stepTitle, stepExplanation, concept) => {
+    console.log('🔍 Abrindo explicação para:', concept)
+    
+    setExplanationDrawer({
+      isOpen: true,
+      stepTitle,
+      stepExplanation,
+      concept,
+      isLoading: true
+    })
+
+    setTimeout(() => {
+      setExplanationDrawer(prev => ({
+        ...prev,
+        isLoading: false
+      }))
+    }, 1000)
+  }
+
+  const handleCloseExplanation = () => {
+    setExplanationDrawer({
+      isOpen: false,
+      stepTitle: '',
+      stepExplanation: '',
+      concept: '',
+      isLoading: false
+    })
   }
 
   const handleTakePhoto = () => {
@@ -443,7 +481,7 @@ function App() {
     return `${minutes}m ${remainingSeconds}s`
   }
 
-  const formatExplanation = (text, type = 'detailed') => {
+  const formatExplanation = (text, type = 'detailed', onExplainStep = null) => {
     console.log('🔍 [FORMAT] Text:', text?.substring(0, 50) + '...')
     console.log('🔍 [FORMAT] Type recebido:', type)
 
@@ -476,6 +514,7 @@ function App() {
               step={step}
               index={index}
               isLast={index === steps.length - 1}
+              onExplainStep={handleExplainStep}
             />
           ))}
         </div>
@@ -778,7 +817,7 @@ function App() {
               {/* Explicação - MANTER IGUAL */}
               <div className="bg-gray-50 p-6 rounded-xl">
                 <div className="prose prose-lg max-w-none">
-                  {formatExplanation(result.explanation, result.subType || 'detailed')}
+                  {formatExplanation(result.explanation, result.subType || 'detailed', handleExplainStep)}
                 </div>
               </div>
             </div>
@@ -883,7 +922,7 @@ function App() {
                 {/* Explicação */}
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <div className="prose prose-sm max-w-none">
-                    {formatExplanation(result.explanation, result.subType || 'detailed')}
+                    {formatExplanation(result.explanation, result.subType || 'detailed', handleExplainStep)}
                   </div>
                 </div>
 
@@ -1250,6 +1289,15 @@ function App() {
         problemText={changeCategoryModal.problemText}
         currentCollectionId={changeCategoryModal.currentCollectionId}
         mode="move"
+      />
+
+      <ExplanationDrawer
+        isOpen={explanationDrawer.isOpen}
+        stepTitle={explanationDrawer.stepTitle}
+        stepExplanation={explanationDrawer.stepExplanation}
+        concept={explanationDrawer.concept}
+        isLoading={explanationDrawer.isLoading}
+        onClose={handleCloseExplanation}
       />
     </Layout>
   )

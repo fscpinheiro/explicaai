@@ -317,7 +317,7 @@ Use linguagem clara e didática para estudantes.`;
         
         const xMatch = fullText.match(/x\s*=\s*[^\n]+/gi);
         if (xMatch && xMatch.length > 0) {
-            return xMatch[xMatch.length - 1].trim(); 
+            return xMatch[xMatch.length - 1].trim().replace(/[\[\]]/g, ''); 
         }
         
         return "Não foi possível extrair a resposta";
@@ -328,6 +328,36 @@ Use linguagem clara e didática para estudantes.`;
         elapsedTime: fullResult.elapsedTime,
         model: this.model
     };
+  }
+
+  /**
+ * Criar prompt para gerar exercícios similares
+ */
+createSimilarPrompt(originalProblem) {
+    return `Você é um professor de matemática criativo. Baseado neste problema original, crie 3 exercícios similares:
+
+  PROBLEMA ORIGINAL: "${originalProblem}"
+
+  INSTRUÇÕES:
+  1. Crie 3 exercícios com a mesma estrutura/conceito
+  2. Mude apenas os números e contexto
+  3. Mantenha o mesmo nível de dificuldade
+  4. Use contextos diferentes (idade, dinheiro, objetos, etc.)
+
+  FORMATO DA RESPOSTA:
+  **Exercício 1:**
+  [Novo problema similar]
+
+  **Exercício 2:** 
+  [Novo problema similar]
+
+  **Exercício 3:**
+  [Novo problema similar]
+
+  **Dica de Estudo:**
+  [Uma dica pedagógica sobre este tipo de problema]
+
+  EXERCÍCIOS SIMILARES:`;
   }
 }
 
