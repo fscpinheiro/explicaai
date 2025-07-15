@@ -32,7 +32,7 @@ COMPLETO | 7. Implementar botão para explicar melhor uma parte da solução (ap
 
 9. Quando o problema for resolvido apenas para mostrar a resposta, ele deve mostrar a opção de resolver passo a passo.
 
-10. Mudar a forma do loading, ver se é possivel cancelar, e adicionar uma animação ou ainda deixar ele sobre a tela no centro.
+COMPLETO | 10. Mudar a forma do loading, ver se é possivel cancelar, e adicionar uma animação ou ainda deixar ele sobre a tela no centro.
 
 ------------------------------------------------------------------------------------------------------------------
 🔬 ESTUDAR PARA IMPLEMENTAR DEPOIS

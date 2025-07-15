@@ -423,28 +423,37 @@ router.post('/explain-text',
         ));
       }
 
+      // ✅ CRIAR AbortSignal para o backend
+      const abortController = new AbortController();
+      
+      // ✅ DETECTAR SE CLIENTE CANCELOU
+      req.on('close', () => {
+        console.log('🛑 Cliente cancelou a requisição');
+        abortController.abort();
+      });
+
       // Auto-categorização
       const categorizationService = require('../services/categorizationService');
       const analysis = categorizationService.analyzeComplete(textValidation.text);
 
-      // ✅ USAR NOVOS MÉTODOS DO OLLAMA SERVICE
+      // ✅ PASSAR AbortSignal para ollamaService
       let explanation;
       console.log('🔍 [BACKEND] Decidindo tipo de explicação:', type);
 
       if (type === 'brief') {
         console.log('🔍 [BACKEND] ✅ USANDO explainMathBrief (ainda não implementado)');
-        explanation = await ollamaService.explainMath(textValidation.text); // Usar structured por enquanto
+        explanation = await ollamaService.explainMath(textValidation.text, abortController.signal);
       } else if (type === 'answer') {
         console.log('🔍 [BACKEND] ✅ USANDO explainMathAnswerOnly');
-        explanation = await ollamaService.explainMathAnswerOnly(textValidation.text);
+        explanation = await ollamaService.soResposta(textValidation.text, abortController.signal);
       } else {
         console.log('🔍 [BACKEND] ✅ USANDO explainMath (detailed structured)');
-        explanation = await ollamaService.explainMath(textValidation.text);
+        explanation = await ollamaService.explainMath(textValidation.text, abortController.signal);
       }
 
       console.log('🔍 [BACKEND] Resposta recebida do Gemma:', explanation.response.substring(0, 100) + '...');
 
-      // Definir coleções (auto-sugestão se não especificado)
+      // Definir coleções (resto da função igual...)
       let finalCollectionIds = collectionIds || [];
       if (finalCollectionIds.length === 0) {
         const suggestedCollection = await req.db.get(
@@ -490,6 +499,12 @@ router.post('/explain-text',
       }, `Problema ${type === 'brief' ? 'resumido' : type === 'answer' ? 'respondido' : 'explicado passo a passo'} e salvo!`));
 
     } catch (error) {
+      // ✅ TRATAR CANCELAMENTO
+      if (error.message === 'Operação cancelada') {
+        console.log('🛑 Operação cancelada no backend');
+        return; // Não enviar resposta se foi cancelado
+      }
+      
       console.error('❌ Erro ao explicar problema:', error.message);
       res.status(500).json(errorResponse(
         'Erro ao processar problema',
@@ -507,8 +522,19 @@ router.post('/explain-text',
 router.post('/so-resposta', asyncHandler(async (req, res) => {
   
   try {
+    // ✅ CRIAR AbortSignal para o backend
+    const abortController = new AbortController();
+    
+    // ✅ DETECTAR SE CLIENTE CANCELOU
+    req.on('close', () => {
+      console.log('🛑 Cliente cancelou a requisição (so-resposta)');
+      abortController.abort();
+    });
+
     const ollamaService = require('../services/ollamaService');
-    const resultado = await ollamaService.soResposta(req.body.problem);
+    
+    // ✅ PASSAR AbortSignal
+    const resultado = await ollamaService.soResposta(req.body.problem, abortController.signal);
     
     res.json({
       success: true,
@@ -516,6 +542,12 @@ router.post('/so-resposta', asyncHandler(async (req, res) => {
       processingTime: resultado.elapsedTime
     });
   } catch (error) {
+    // ✅ TRATAR CANCELAMENTO
+    if (error.message === 'Operação cancelada') {
+      console.log('🛑 Operação cancelada no backend (so-resposta)');
+      return; // Não enviar resposta se foi cancelado
+    }
+    
     console.error('❌ Erro:', error);
     res.status(500).json({ error: error.message });
   }

@@ -297,65 +297,73 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
 
   // Função para explicar problema (conecta com API real)
    const handleExplain = async (type = 'detailed') => {
-      console.log('🚨 [FRONTEND] Iniciando handleExplain com type:', type)
-      if (!problem.trim()) {
-        alert('Por favor, digite um problema de matemática.')
-        return
-      }
+  console.log('🚨 [FRONTEND] Iniciando handleExplain com type:', type)
+  if (!problem.trim()) {
+    alert('Por favor, digite um problema de matemática.')
+    return
+  }
 
-      setIsLoading(true)
+  // ✅ CRIAR AbortController
+  const controller = new AbortController()
+  setIsLoading(true)
 
-      try {
-        console.log('🚨 [FRONTEND] Fazendo fetch para /api/problems/explain-text')
-        console.log('🚨 [FRONTEND] Body da request:', { 
-          text: problem.trim(), // ✅ USAR 'text' aqui
-          type: type
-        })
-        
-        const response = await fetch('/api/problems/explain-text', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            text: problem.trim(), // ✅ CORRETO: usar 'text'
-            type: type
-          }),
-        })
-        
-        console.log('🚨 [FRONTEND] Response status:', response.status)
-        const data = await response.json()
-        console.log('🚨 [FRONTEND] Response data:', data)
-        
-        if (data.success) {
-          // ✅ VERIFICAR SE É RESPOSTA ESTRUTURADA
-          // const isStructured = isStructuredResponse(data.explanation)
-          // console.log('📝 [FRONTEND] Resposta estruturada:', isStructured)
-          
-          onExplain({
-            type: type,
-            // isStructured: isStructured,
-            problem: {
-              text: problem.trim(),
-              is_favorite: false,
-              id: null
-            },
-            explanation: data.explanation,
-            processingTime: data.processingTime || 0,
-            autoCategory: data.autoCategory || null,
-            isTemporary: true
-          })
+  // ✅ DEFINIR MENSAGEM DE LOADING
+  const message = type === 'answer' ? 'Calculando resposta...' : 'Resolvendo passo a passo...'
+  
+  // ✅ PASSAR CONTROLLER E MENSAGEM PARA O PAI
+  if (window.setAbortController) {
+    window.setAbortController(controller)
+  }
+  if (window.setLoadingMessage) {
+    window.setLoadingMessage(message)
+  }
 
-          setProblem('')
-        } else {
-          alert('Erro: ' + (data.message || data.error))
-        }
-      } catch (error) {
-        alert('Erro ao conectar com o servidor: ' + error.message)
-      } finally {
-        setIsLoading(false)
-      }
+  try {
+    const response = await fetch('/api/problems/explain-text', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        text: problem.trim(),
+        type: type
+      }),
+      signal: controller.signal  // ✅ ADICIONAR SIGNAL
+    })
+    
+    const data = await response.json()
+    
+    if (data.success) {
+      onExplain({
+        type: type,
+        problem: {
+          text: problem.trim(),
+          is_favorite: false,
+          id: null
+        },
+        explanation: data.explanation,
+        processingTime: data.processingTime || 0,
+        autoCategory: data.autoCategory || null,
+        isTemporary: true
+      })
+
+      setProblem('')
+    } else {
+      alert('Erro: ' + (data.message || data.error))
     }
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.log('🛑 Requisição cancelada')
+    } else {
+      alert('Erro ao conectar com o servidor: ' + error.message)
+    }
+  } finally {
+    setIsLoading(false)
+    if (window.setAbortController) {
+      window.setAbortController(null)
+    }
+  }
+}
 
   // Função para gerar similares (preparada para quando a API estiver pronta)
   const handleGenerateSimilar = async () => {
@@ -522,11 +530,19 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
                 return
               }
 
-              setIsLoading(true) // ✅ ADICIONAR ESTA LINHA
+              // ✅ CRIAR AbortController
+              const controller = new AbortController()
+              setIsLoading(true)
+
+              // ✅ PASSAR PARA O PAI
+              if (window.setAbortController) {
+                window.setAbortController(controller)
+              }
+              if (window.setLoadingMessage) {
+                window.setLoadingMessage('Calculando resposta rápida...')
+              }
 
               try {
-                console.log('🚨 Testando API...');
-                
                 const response = await fetch('/api/problems/so-resposta', {
                   method: 'POST',
                   headers: {
@@ -535,6 +551,7 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
                   body: JSON.stringify({ 
                     problem: problem.trim()
                   }),
+                  signal: controller.signal  // ✅ ADICIONAR SIGNAL
                 });
 
                 const data = await response.json();
@@ -556,9 +573,16 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
                   alert('Erro: ' + (data.message || data.error))
                 }
               } catch (error) {
-                alert(`❌ ERRO: ${error.message}`);
+                if (error.name === 'AbortError') {
+                  console.log('🛑 Requisição cancelada')
+                } else {
+                  alert(`❌ ERRO: ${error.message}`)
+                }
               } finally {
-                setIsLoading(false) // ✅ ADICIONAR ESTA LINHA
+                setIsLoading(false)
+                if (window.setAbortController) {
+                  window.setAbortController(null)
+                }
               }
             }}
             disabled={!problem.trim() || isLoading}

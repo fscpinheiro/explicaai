@@ -7,6 +7,7 @@ import CollectionSelectorModal from './components/ui/CollectionSelectorModal'
 import StepCard from './components/ui/StepCard'
 import { parseStructuredMathResponse, isStructuredResponse, extractFinalAnswer } from './utils/mathParser'
 import ExplanationDrawer from './components/ui/ExplanationDrawer'
+import AdvancedLoader from './components/ui/AdvancedLoader'
 
 
 function App() {
@@ -48,11 +49,25 @@ function App() {
     loadHistory()
   }, [])
 
+  const [abortController, setAbortController] = useState(null)
+  const [loadingMessage, setLoadingMessage] = useState('')
   
   // Filtrar histórico quando mudar coleção selecionada
   useEffect(() => {
     filterHistory()
   }, [history, selectedCollection])
+
+  useEffect(() => {
+    // Expor funções globalmente para MathInput
+    window.setAbortController = setAbortController
+    window.setLoadingMessage = setLoadingMessage
+    
+    // Limpar ao desmontar
+    return () => {
+      delete window.setAbortController
+      delete window.setLoadingMessage
+    }
+  }, [])
 
   const loadHistory = async () => {
     try {
@@ -200,9 +215,7 @@ function App() {
   }
 
   const handleExplain = async (resultData) => {
-    console.log('🔍 [FRONTEND] Resultado recebido:', resultData)
-    console.log('🔍 [FRONTEND] Type:', resultData.type)
-    console.log('🔍 [FRONTEND] SubType que será definido:', resultData.type)
+      console.log('🔍 [FRONTEND] Resultado recebido:', resultData)
     
     // Mostrar resultado
     setResult({
@@ -217,9 +230,26 @@ function App() {
     // Recarregar histórico para mostrar o novo problema
     await loadHistory()
     notifyCollectionsChanged() 
+    
     // Mudar para modo input com resultado
     setViewMode('input')
     setShowHistory(false)
+  }
+
+  // ✅ ADICIONAR FUNÇÃO DE CANCELAMENTO:
+  const handleCancelRequest = () => {
+    if (abortController) {
+      console.log('🛑 Cancelando requisição...')
+      abortController.abort()
+      setAbortController(null)
+      setIsLoading(false)
+      setLoadingMessage('')
+      
+      // ✅ MOSTRAR FEEDBACK VISUAL
+      setTimeout(() => {
+        alert('⏹️ Operação cancelada com sucesso!')
+      }, 100)
+    }
   }
 
 
@@ -833,6 +863,8 @@ function App() {
             onTakePhoto={handleTakePhoto}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
+            setAbortController={setAbortController}
+            setLoadingMessage={setLoadingMessage}  
           />
           {/* BOTÃO TEMPORÁRIO */}
           {result && (
@@ -1289,6 +1321,12 @@ function App() {
         problemText={changeCategoryModal.problemText}
         currentCollectionId={changeCategoryModal.currentCollectionId}
         mode="move"
+      />
+
+      <AdvancedLoader
+        isVisible={isLoading}
+        onCancel={handleCancelRequest}
+        message={loadingMessage}
       />
 
       <ExplanationDrawer

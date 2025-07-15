@@ -33,70 +33,84 @@ class OllamaService {
   /**
    * Chamar Ollama com prompt (com ou sem imagem)
    */
-  async generate(prompt, imagePath = null, options = {}) {
-    const fetch = (await import('node-fetch')).default;
-    
-    const requestBody = {
-      model: this.model,
-      prompt: prompt,
-      stream: false,
-      options: { ...this.defaultOptions, ...options }
-    };
+  async generate(prompt, imagePath = null, options = {}, abortSignal = null) {
+  const fetch = (await import('node-fetch')).default;
+  
+  const requestBody = {
+    model: this.model,
+    prompt: prompt,
+    stream: false,
+    options: { ...this.defaultOptions, ...options }
+  };
 
-    // Adicionar imagem se fornecida
-    if (imagePath && fs.existsSync(imagePath)) {
-      try {
-        const imageBuffer = fs.readFileSync(imagePath);
-        const base64Image = imageBuffer.toString('base64');
-        requestBody.images = [base64Image];
-        console.log(`📷 Imagem adicionada: ${path.basename(imagePath)}`);
-      } catch (error) {
-        console.error('❌ Erro ao processar imagem:', error.message);
-        throw new Error('Erro ao processar a imagem');
-      }
-    }
-
+  // Adicionar imagem se fornecida
+  if (imagePath && fs.existsSync(imagePath)) {
     try {
-      console.log('🤖 Enviando para Gemma 3n...');
-      const startTime = Date.now();
-      
-      const response = await fetch(`${this.baseUrl}/api/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-        timeout: 120000 // 2 minutos timeout
-      });
-
-      if (!response.ok) {
-        throw new Error(`Ollama respondeu com status ${response.status}`);
-      }
-
-      const data = await response.json();
-      const elapsedTime = getElapsedTime(startTime);
-      
-      console.log(`✅ Resposta recebida em ${elapsedTime}s`);
-      
-      if (!data.response) {
-        throw new Error('Resposta vazia do modelo');
-      }
-      
-      return {
-        response: data.response,
-        elapsedTime,
-        model: this.model
-      };
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString('base64');
+      requestBody.images = [base64Image];
+      console.log(`📷 Imagem adicionada: ${path.basename(imagePath)}`);
     } catch (error) {
-      console.error('❌ Erro ao chamar Ollama:', error.message);
-      
-      if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
-        throw new Error('Timeout - o modelo está demorando muito para responder. Tente reiniciar o Ollama.');
-      }
-      
-      throw new Error(`Erro na comunicação com IA: ${error.message}`);
+      console.error('❌ Erro ao processar imagem:', error.message);
+      throw new Error('Erro ao processar a imagem');
     }
   }
+
+  try {
+    console.log('🤖 Enviando para Gemma 3n...');
+    const startTime = Date.now();
+    
+    // ✅ ADICIONAR SUPORTE A CANCELAMENTO
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      timeout: 120000
+    };
+
+    // ✅ ADICIONAR AbortSignal se fornecido
+    if (abortSignal) {
+      fetchOptions.signal = abortSignal;
+    }
+    
+    const response = await fetch(`${this.baseUrl}/api/generate`, fetchOptions);
+
+    if (!response.ok) {
+      throw new Error(`Ollama respondeu com status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const elapsedTime = getElapsedTime(startTime);
+    
+    console.log(`✅ Resposta recebida em ${elapsedTime}s`);
+    
+    if (!data.response) {
+      throw new Error('Resposta vazia do modelo');
+    }
+    
+    return {
+      response: data.response,
+      elapsedTime,
+      model: this.model
+    };
+  } catch (error) {
+    // ✅ TRATAR CANCELAMENTO
+    if (error.name === 'AbortError') {
+      console.log('🛑 Requisição cancelada pelo usuário');
+      throw new Error('Operação cancelada');
+    }
+    
+    console.error('❌ Erro ao chamar Ollama:', error.message);
+    
+    if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
+      throw new Error('Timeout - o modelo está demorando muito para responder. Tente reiniciar o Ollama.');
+    }
+    
+    throw new Error(`Erro na comunicação com IA: ${error.message}`);
+  }
+}
 
   /**
    * Analisar imagem com problema matemático
@@ -267,9 +281,9 @@ Use linguagem clara e didática para estudantes.`;
   /**
    * Explicar problema matemático - VERSÃO DETALHADA
    */
-  async explainMath(problem) {
+  async explainMath(problem, abortSignal = null) {
     const prompt = this.createMathPrompt(problem);
-    const result = await this.generate(prompt);
+    const result = await this.generate(prompt, null, {}, abortSignal);
     
     console.log(`📝 Problema estruturado: "${this.truncateText ? this.truncateText(problem) : problem.substring(0, 50)}..." em ${result.elapsedTime}s`);
     
@@ -304,7 +318,7 @@ Use linguagem clara e didática para estudantes.`;
   /**
    * TESTE: Função para debug - retorna Olá Mundo
    */
-  async soResposta(problem) {
+  async soResposta(problem, abortSignal = null) {
     console.log('🚨 SOLUÇÃO DRAMÁTICA: Passo a passo interno!');
     
     const fullResult = await this.explainMath(problem);
