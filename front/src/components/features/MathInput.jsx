@@ -3,7 +3,7 @@ import { Calculator, Camera, Sparkles, BookOpen, X, HelpCircle } from 'lucide-re
 import { motion, AnimatePresence } from 'framer-motion'
 import CollectionSelectorModal from '../ui/CollectionSelectorModal' 
 
-const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIsLoading }) => {
+const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIsLoading, isOllamaOnline = true }) => {
   const [problem, setProblem] = useState('')
   const [showSymbols, setShowSymbols] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -367,6 +367,11 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
 
   // Função para gerar similares (preparada para quando a API estiver pronta)
   const handleGenerateSimilar = async () => {
+    if (!isOllamaOnline) {
+      alert('⚠️ IA está offline. Para gerar similares, verifique se o Ollama está rodando.')
+      return
+    }
+    
     if (!problem.trim()) {
       alert('Por favor, digite um problema de matemática.')
       return
@@ -431,10 +436,23 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
             id="math-input"
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
-            placeholder="Digite seu problema aqui..."
-            className="w-full h-32 p-4 text-lg border-2 border-gray-200 rounded-xl resize-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
+            placeholder={isOllamaOnline ? 
+              "Digite seu problema aqui..." : 
+              "IA offline - Digite para estudar problemas salvos apenas..."
+            }
+            className={`w-full h-32 p-4 text-lg border-2 rounded-xl resize-none focus:ring-4 transition-all duration-200 outline-none ${
+              isOllamaOnline 
+                ? 'border-gray-200 focus:border-blue-400 focus:ring-blue-100' 
+                : 'border-yellow-300 bg-yellow-50 focus:border-yellow-400 focus:ring-yellow-100'
+            }`}
             disabled={isLoading}
           />
+
+          {!isOllamaOnline && (
+            <div className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs px-2 py-1 rounded-full font-medium">
+              ⚠️ IA Offline
+            </div>
+          )}
           
           {/* Botão de Símbolos */}
           <button
@@ -515,16 +533,24 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
           {/* Gerar Similares */}
           <button
             onClick={handleGenerateSimilar}
-            disabled={!problem.trim() || isLoading}
-            className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            disabled={!problem.trim() || isLoading || !isOllamaOnline} 
+            className={`flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+              !isOllamaOnline ? 'bg-gray-400 cursor-not-allowed' : '' // ✅ STYLING OFFLINE
+            }`}
+            title={!isOllamaOnline ? "IA offline - Não é possível gerar similares" : "Gerar exercícios similares"}
           >
             <Sparkles className="w-5 h-5" />
-            <span>Similares</span>
+            <span>{!isOllamaOnline ? 'IA Offline' : 'Similares'}</span>
           </button>
 
           {/* Explicação Resumida */}
           <button
             onClick={async () => {
+              if (!isOllamaOnline) {
+                alert('⚠️ IA está offline. Só é possível estudar problemas salvos.')
+                return
+              }
+              
               if (!problem.trim()) {
                 alert('Por favor, digite um problema de matemática.')
                 return
@@ -585,9 +611,14 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
                 }
               }
             }}
-            disabled={!problem.trim() || isLoading}
-            className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            disabled={!problem.trim() || isLoading || !isOllamaOnline}
+            className={`flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+              !isOllamaOnline ? 'bg-gray-400 cursor-not-allowed' : ''
+            }`}
+            title={!isOllamaOnline ? "IA offline - Não é possível resolver novos problemas" : "Só Resposta"}
           >
+            <span>{!isOllamaOnline ? 'IA Offline' : 'Só Resposta'}</span>
+
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
@@ -598,10 +629,20 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
 
           {/* Explicação Passo a Passo */}
           <button
-            onClick={() => handleExplain('detailed')}
-            disabled={!problem.trim() || isLoading}
-            className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            onClick={() => {
+              if (!isOllamaOnline) {
+                alert('⚠️ IA está offline. Só é possível estudar problemas salvos.')
+                return
+              }
+              handleExplain('detailed')
+            }}
+            disabled={!problem.trim() || isLoading || !isOllamaOnline}
+            className={`flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+              !isOllamaOnline ? 'bg-gray-400 cursor-not-allowed' : ''
+            }`}
+            title={!isOllamaOnline ? "IA offline - Não é possível resolver novos problemas" : "Passo a Passo"}
           >
+            <span>{!isOllamaOnline ? 'IA Offline' : 'Passo a Passo'}</span>
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (

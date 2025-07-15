@@ -34,6 +34,23 @@ COMPLETO | 7. Implementar botão para explicar melhor uma parte da solução (ap
 
 COMPLETO | 10. Mudar a forma do loading, ver se é possivel cancelar, e adicionar uma animação ou ainda deixar ele sobre a tela no centro.
 
+COMPLETO | 11. Criar uma splashscreen quando abrir
+
+12. Estrutura limpa do front, mover o que estiver fora para esta estrutura e não quebrar nada
+front/src/
+├── components/
+│   ├── ui/           (componentes reutilizáveis)
+│   ├── layout/       (Layout principal)
+│   ├── features/     (MathInput)
+│   └── screens/      (🆕 SplashScreen, etc)
+├── hooks/            (🆕 useSystemCheck)
+├── services/         (🆕 api calls)
+├── utils/            (mathParser, etc)
+├── assets/           (imagens)
+└── constants/        (🆕 configurações)
+
+COMPLETO |13. Implementar modo offline quando o Ollama estiver fora, entrar no modo estudo, sem a possibilidade de resolver novos problemas
+
 ------------------------------------------------------------------------------------------------------------------
 🔬 ESTUDAR PARA IMPLEMENTAR DEPOIS
 
