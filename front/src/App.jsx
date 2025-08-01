@@ -38,6 +38,12 @@ function App() {
     type: 'detailed'
   })
 
+  const [showExamples, setShowExamples] = useState(() => {
+    // Carregar preferência salva ou usar true como padrão
+    const saved = localStorage.getItem('explicaai-show-examples')
+    return saved ? JSON.parse(saved) : true
+  })
+
   const [selectedCollectionName, setSelectedCollectionName] = useState('')
 
   const [deleteModal, setDeleteModal] = useState({
@@ -65,6 +71,10 @@ function App() {
   useEffect(() => {
     loadHistory()
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('explicaai-show-examples', JSON.stringify(showExamples))
+  }, [showExamples])
 
   const [abortController, setAbortController] = useState(null)
   const [loadingMessage, setLoadingMessage] = useState('')
@@ -871,6 +881,8 @@ function App() {
           onCreateCollection={handleCreateCollection}
           showHistory={showHistory}
           onToggleHistory={handleToggleHistory}
+          showExamples={showExamples}
+          onToggleExamples={() => setShowExamples(prev => !prev)}
         >
           <div className="space-y-8">
             {/* ✅ BANNER DE STATUS OFFLINE - ADICIONAR APÓS space-y-8 */}
@@ -976,6 +988,8 @@ function App() {
                 setAbortController={setAbortController}
                 setLoadingMessage={setLoadingMessage}  
                 isOllamaOnline={systemStatus.canUseAI}
+                showExamples={showExamples}
+                onToggleExamples={() => setShowExamples(prev => !prev)}
               />
               {/* BOTÃO TEMPORÁRIO */}
               {result && (

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Sparkles, Calculator } from 'lucide-react'
 
-const RotatingExamples = ({ onExampleClick }) => {
+const RotatingExamples = ({ onExampleClick, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
 
@@ -121,8 +121,17 @@ const RotatingExamples = ({ onExampleClick }) => {
   }
 
   return (
-    <div className="mt-4 mb-6">
-      <AnimatePresence mode="wait">
+    <div className="mt-4 mb-6 relative">
+        <button
+            onClick={() => onClose && onClose()}
+            className="absolute top-2 right-2 z-10 p-1 text-gray-400 hover:text-gray-600 hover:bg-white rounded-full transition-colors"
+            title="Ocultar exemplos"
+        >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+      <AnimatePresence mode="wait">       
         {isVisible && (
           <motion.div
             key={currentIndex}
@@ -133,6 +142,7 @@ const RotatingExamples = ({ onExampleClick }) => {
             className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100 cursor-pointer hover:shadow-md transition-shadow duration-200"
             onClick={handleExampleClick}
           >
+            
             <div className="flex items-start gap-3">
               {/* Ícone da categoria */}
               <div className="flex-shrink-0">
@@ -194,10 +204,6 @@ const RotatingExamples = ({ onExampleClick }) => {
         >
           ← Anterior
         </button>
-        
-        <span className="text-xs text-gray-400 px-2">
-          {currentIndex + 1} de {examples.length}
-        </span>
         
         <button
           onClick={() => {

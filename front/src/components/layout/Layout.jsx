@@ -5,8 +5,18 @@ import { motion, AnimatePresence } from 'framer-motion'
 import BackgroundSelector from '../ui/BackgroundSelector'
 import BackgroundManager from '../ui/BackgroundManager'
 import useBackground from '../../hooks/useBackground'
+import SettingsModal from '../ui/SettingsModal'
 
-const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateCollection, showHistory, onToggleHistory }) => {
+const Layout = ({ 
+  children, 
+  selectedCollection, 
+  onCollectionSelect, 
+  onCreateCollection, 
+  showHistory, 
+  onToggleHistory,
+  showExamples,
+  onToggleExamples
+}) => {
   const [collections, setCollections] = useState([])
   const [showSidebar, setShowSidebar] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -18,6 +28,8 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
   // ✅ ESTADO PARA SISTEMA DE FUNDOS
   const [showBackgroundSelector, setShowBackgroundSelector] = useState(false)
   const { backgroundType, changeBackground } = useBackground()
+
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
 
   useEffect(() => {
     loadCollections()
@@ -159,9 +171,9 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                 
                 {/* ✅ BOTÃO DE CONFIGURAÇÕES MODIFICADO */}
                 <button 
-                  onClick={() => setShowBackgroundSelector(true)}
+                  onClick={() => setShowSettingsModal(true)}
                   className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200 border-2 border-transparent"
-                  title="Personalizar fundo"
+                  title="Configurações"
                 >
                   <Settings className="w-5 h-5" />
                 </button>
@@ -427,7 +439,13 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
           </motion.div>
         )}
       </AnimatePresence>
-
+         <SettingsModal
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          onOpenBackgroundSelector={() => setShowBackgroundSelector(true)}
+          showExamples={showExamples}
+          onToggleExamples={onToggleExamples}
+        />
       {/* ✅ MODAL DE SELEÇÃO DE FUNDO */}
       <BackgroundSelector
         isOpen={showBackgroundSelector}

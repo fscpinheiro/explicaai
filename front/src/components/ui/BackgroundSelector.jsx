@@ -11,13 +11,6 @@ const BackgroundSelector = ({ isOpen, onClose, currentBackground, onSelectBackgr
       preview: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 50%, #f3e8ff 100%)'
     },
     {
-      id: 'clouds',
-      name: 'Nuvens 3D',
-      description: 'Nuvens animadas interativas',
-      icon: <Cloud className="w-6 h-6" />,
-      preview: 'linear-gradient(135deg, #68b8d7 0%, #adc1de 50%, #ff9919 100%)'
-    },
-    {
       id: 'gradient',
       name: 'Gradiente Animado',
       description: 'Cores em movimento contínuo',
