@@ -577,7 +577,7 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
                   body: JSON.stringify({ 
                     problem: problem.trim()
                   }),
-                  signal: controller.signal  // ✅ ADICIONAR SIGNAL
+                  signal: controller.signal
                 });
 
                 const data = await response.json();
@@ -617,17 +617,18 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
             }`}
             title={!isOllamaOnline ? "IA offline - Não é possível resolver novos problemas" : "Só Resposta"}
           >
-            <span>{!isOllamaOnline ? 'IA Offline' : 'Só Resposta'}</span>
-
+            {/* ✅ ÍCONE */}
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <BookOpen className="w-5 h-5" />
             )}
-            <span>Só Resposta</span>
+            
+            {/* ✅ TEXTO (SÓ UM SPAN!) */}
+            <span>{!isOllamaOnline ? 'IA Offline' : 'Só Resposta'}</span>
           </button>
 
-          {/* Explicação Passo a Passo */}
+          {/* ✅ BOTÃO "PASSO A PASSO" CORRIGIDO */}
           <button
             onClick={() => {
               if (!isOllamaOnline) {
@@ -642,13 +643,15 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
             }`}
             title={!isOllamaOnline ? "IA offline - Não é possível resolver novos problemas" : "Passo a Passo"}
           >
-            <span>{!isOllamaOnline ? 'IA Offline' : 'Passo a Passo'}</span>
+            {/* ✅ ÍCONE */}
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <Calculator className="w-5 h-5" />
             )}
-            <span>Passo a Passo</span>
+            
+            {/* ✅ TEXTO (SÓ UM SPAN!) */}
+            <span>{!isOllamaOnline ? 'IA Offline' : 'Passo a Passo'}</span>
           </button>
         </div>
       </motion.div>
