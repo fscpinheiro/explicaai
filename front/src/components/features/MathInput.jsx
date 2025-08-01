@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Calculator, Camera, Sparkles, BookOpen, X, HelpCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import CollectionSelectorModal from '../ui/CollectionSelectorModal' 
+import RotatingExamples from '../ui/RotatingExamples'
 
 const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIsLoading, isOllamaOnline = true }) => {
   const [problem, setProblem] = useState('')
@@ -425,9 +426,14 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             Digite ou cole seu problema de matemática
           </h2>
-          <p className="text-gray-600">
-            Ex: Resolva a equação 2x + 5 = 13
-          </p>
+          <RotatingExamples 
+            onExampleClick={(exampleText) => {
+              setProblem(exampleText)
+              setTimeout(() => {
+                document.getElementById('math-input')?.focus()
+              }, 100)
+            }} 
+          />
         </div>
 
         {/* Textarea Principal */}
