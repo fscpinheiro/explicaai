@@ -583,11 +583,49 @@ function App() {
           ))}
           
           {!stepVisibility.showAllSteps && stepVisibility.currentStepIndex < allSteps.length - 1 && (
-            <div className="text-center py-4">
+            <div className="text-center py-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-200">
                 <span className="text-blue-600 text-sm font-medium">
                   Mais {allSteps.length - stepVisibility.currentStepIndex - 1} passo(s) disponível(is)
                 </span>
+
+                 <div className="flex items-center gap-3">
+                    {/* Botão Próximo Passo */}
+                    <button
+                      onClick={() => {
+                        setStepVisibility(prev => ({
+                          ...prev,
+                          currentStepIndex: prev.currentStepIndex + 1
+                        }))
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
+                      title="Ver próximo passo"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      <span>Próximo Passo</span>
+                    </button>
+                    
+                    {/* Botão Mostrar Todos */}
+                    <button
+                      onClick={() => {
+                        setStepVisibility({
+                          currentStepIndex: allSteps.length - 1,
+                          showAllSteps: true,
+                          totalSteps: allSteps.length
+                        })
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium"
+                      title="Mostrar todos os passos restantes"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                      <span>Ver Todos</span>
+                    </button>
+                  </div>
+
                 <div className="flex gap-1">
                   {Array.from({length: 3}).map((_, i) => (
                     <div key={i} className="w-1 h-1 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: `${i * 0.2}s`}} />
@@ -1003,27 +1041,7 @@ function App() {
                         
                         {/* ✅ BOTÕES DE CONTROLE - POSIÇÃO CORRETA */}
                         <div className="flex items-center gap-2 ml-4">
-                          {/* Botão Mostrar Todos os Passos */}
-                          {result.subType === 'detailed' && !stepVisibility.showAllSteps && (
-                            <button
-                              onClick={() => {
-                                const allSteps = parseStructuredMathResponse(result.explanation)
-                                setStepVisibility({
-                                  currentStepIndex: allSteps.length - 1,
-                                  showAllSteps: true,
-                                  totalSteps: allSteps.length
-                                })
-                              }}
-                              className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
-                              title="Mostrar todos os passos"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                              </svg>
-                              <span className="hidden sm:inline">Todos</span>
-                            </button>
-                          )}
-                          
+                                                   
                           {/* Botão Próximo Passo */}
                           {result.subType === 'detailed' && !stepVisibility.showAllSteps && (
                             <button
