@@ -6,6 +6,7 @@ import BackgroundSelector from '../ui/BackgroundSelector'
 import BackgroundManager from '../ui/BackgroundManager'
 import useBackground from '../../hooks/useBackground'
 import SettingsModal from '../ui/SettingsModal'
+import AISphere from '../ui/AISphere'
 
 const Layout = ({ 
   children, 
@@ -15,7 +16,9 @@ const Layout = ({
   showHistory, 
   onToggleHistory,
   showExamples,
-  onToggleExamples
+  onToggleExamples,
+  systemStatus,
+  isLoading
 }) => {
   const [collections, setCollections] = useState([])
   const [showSidebar, setShowSidebar] = useState(false)
@@ -122,16 +125,20 @@ const Layout = ({
     <BackgroundManager backgroundType={backgroundType}>
       {/* ✅ REMOVER O DIV COM FUNDO FIXO */}
       <div className="min-h-screen flex flex-col">
-        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-30">
+        <header className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 sticky top-0 z-30">
           <div className="px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
-                  🧮
+                <div className="w-12 h-12">
+                  <AISphere 
+                    state={isLoading ? "processing" : !systemStatus?.canUseAI ? "error" : "idle"}
+                    size="small"
+                    className="w-full h-full"
+                  />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800">ExplicaAI</h1>
-                  <p className="text-sm text-gray-600">
+                   <h1 className="text-2xl font-bold text-white">ExplicaAI</h1>
+                  <p className="text-sm text-gray-300">
                     {showHistory 
                       ? '📚 Histórico de Problemas'
                       : selectedCollection === 'favorites' 

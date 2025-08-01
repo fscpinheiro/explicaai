@@ -9,6 +9,7 @@ import { parseStructuredMathResponse, isStructuredResponse, extractFinalAnswer }
 import ExplanationDrawer from './components/ui/ExplanationDrawer'
 import AdvancedLoader from './components/ui/AdvancedLoader'
 import SplashScreen from './components/ui/SplashScreen'
+import AISphere from './components/ui/AISphere'
 
 
 function App() {
@@ -883,6 +884,8 @@ function App() {
           onToggleHistory={handleToggleHistory}
           showExamples={showExamples}
           onToggleExamples={() => setShowExamples(prev => !prev)}
+          systemStatus={systemStatus}
+          isLoading={isLoading}
         >
           <div className="space-y-8">
             {/* ✅ BANNER DE STATUS OFFLINE - ADICIONAR APÓS space-y-8 */}
@@ -979,6 +982,7 @@ function App() {
             {/* ✅ MODO INPUT - Card principal (apenas quando não está no histórico ou coleção) */}
             {viewMode === 'input' && (
               <>
+                           
               <MathInput
                 onExplain={handleExplain}
                 onGenerateSimilar={handleGenerateSimilar}

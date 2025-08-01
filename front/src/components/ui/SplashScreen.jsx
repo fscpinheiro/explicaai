@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertCircle, CheckCircle, Loader, RefreshCw } from 'lucide-react'
 import useSystemCheck from '../../hooks/useSystemCheck'
+import AISphere from './AISphere'
 
 
 const SplashScreen = ({ onComplete }) => {
@@ -77,15 +78,12 @@ const SplashScreen = ({ onComplete }) => {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="mb-8"
           >
-            <div className="w-32 h-32 mx-auto mb-6 relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-3xl shadow-2xl"></div>
-              <div className="absolute inset-2 bg-white rounded-2xl flex items-center justify-center">
-                <img
-                  src={splashImages[currentImageIndex]}
-                  alt="ExplicaAI"
-                  className="w-16 h-16 object-contain"
-                />
-              </div>
+             <div className="w-32 h-32 mx-auto mb-6 relative">
+              <AISphere 
+                state={systemStatus.isChecking ? "loading" : systemStatus.error ? "error" : "idle"}
+                size="large"
+                className="w-full h-full"
+              />
             </div>
             
             <h1 className="text-4xl font-bold text-white mb-2">
