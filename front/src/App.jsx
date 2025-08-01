@@ -55,6 +55,12 @@ function App() {
     isLoading: false
   })
 
+  const [stepVisibility, setStepVisibility] = useState({
+    currentStepIndex: 0, // Quantos passos mostrar (0 = apenas primeiro)
+    showAllSteps: false, // Se está mostrando todos
+    totalSteps: 0 // Total de passos disponíveis
+  })
+
   // Carregar histórico de problemas ao iniciar
   useEffect(() => {
     loadHistory()
@@ -234,6 +240,15 @@ function App() {
   const handleExplain = async (resultData) => {
       console.log('🔍 [FRONTEND] Resultado recebido:', resultData)
     
+      if (resultData.type === 'detailed') {
+        const allSteps = parseStructuredMathResponse(resultData.explanation)
+        setStepVisibility({
+          currentStepIndex: 0, // Mostrar apenas primeiro passo
+          showAllSteps: false,
+          totalSteps: allSteps.length
+        })
+      }
+      
     // Mostrar resultado
     setResult({
       type: 'explanation',
@@ -247,10 +262,8 @@ function App() {
     // Recarregar histórico para mostrar o novo problema
     await loadHistory()
     notifyCollectionsChanged() 
-    
-    // Mudar para modo input com resultado
     setViewMode('input')
-    setShowHistory(false)
+    setShowHistory(false)    
   }
 
   // ✅ ADICIONAR FUNÇÃO DE CANCELAMENTO:
@@ -551,24 +564,42 @@ function App() {
     if (isStructuredResponse(text)) {
       console.log('✅ [FORMAT] Resposta estruturada detectada!')
       
-      const steps = parseStructuredMathResponse(text)
+      const allSteps = parseStructuredMathResponse(text)
+
+      const stepsToShow = stepVisibility.showAllSteps 
+      ? allSteps 
+      : allSteps.slice(0, stepVisibility.currentStepIndex + 1)
       
       return (
         <div className="space-y-6">
-          {steps.map((step, index) => (
+          {stepsToShow.map((step, index) => (
             <StepCard 
               key={index}
               step={step}
               index={index}
-              isLast={index === steps.length - 1}
+              isLast={index === stepsToShow.length - 1}
               onExplainStep={handleExplainStep}
             />
           ))}
+          
+          {!stepVisibility.showAllSteps && stepVisibility.currentStepIndex < allSteps.length - 1 && (
+            <div className="text-center py-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-200">
+                <span className="text-blue-600 text-sm font-medium">
+                  Mais {allSteps.length - stepVisibility.currentStepIndex - 1} passo(s) disponível(is)
+                </span>
+                <div className="flex gap-1">
+                  {Array.from({length: 3}).map((_, i) => (
+                    <div key={i} className="w-1 h-1 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: `${i * 0.2}s`}} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )
     }
     
-    // ✅ FALLBACK: Formato antigo (mantém compatibilidade)
     console.log('⚠️ [FORMAT] Usando formatação legacy')
     
     return text.split('\n').map((line, index) => {
@@ -970,26 +1001,76 @@ function App() {
                           <p className="text-blue-700">{result.problem.text}</p>
                         </div>
                         
-                        {/* Botão de Favorito */}
-                        <button
-                          onClick={() => toggleFavorite(
-                            result.problem.id, 
-                            result.problem.id ? null : {
-                              text: result.problem.text,
-                              explanation: result.explanation,
-                              processingTime: result.processingTime,
-                              type: result.subType
-                            }
+                        {/* ✅ BOTÕES DE CONTROLE - POSIÇÃO CORRETA */}
+                        <div className="flex items-center gap-2 ml-4">
+                          {/* Botão Mostrar Todos os Passos */}
+                          {result.subType === 'detailed' && !stepVisibility.showAllSteps && (
+                            <button
+                              onClick={() => {
+                                const allSteps = parseStructuredMathResponse(result.explanation)
+                                setStepVisibility({
+                                  currentStepIndex: allSteps.length - 1,
+                                  showAllSteps: true,
+                                  totalSteps: allSteps.length
+                                })
+                              }}
+                              className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                              title="Mostrar todos os passos"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                              <span className="hidden sm:inline">Todos</span>
+                            </button>
                           )}
-                          className={`ml-4 p-2 rounded-lg transition-colors ${
-                            result.problem.is_favorite
-                              ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                              : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                          }`}
-                          title={result.problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                        >
-                          <Heart className={`w-5 h-5 ${result.problem.is_favorite ? 'fill-current' : ''}`} />
-                        </button>
+                          
+                          {/* Botão Próximo Passo */}
+                          {result.subType === 'detailed' && !stepVisibility.showAllSteps && (
+                            <button
+                              onClick={() => {
+                                const allSteps = parseStructuredMathResponse(result.explanation)
+                                if (stepVisibility.currentStepIndex < allSteps.length - 1) {
+                                  setStepVisibility(prev => ({
+                                    ...prev,
+                                    currentStepIndex: prev.currentStepIndex + 1
+                                  }))
+                                }
+                              }}
+                              disabled={(() => {
+                                const allSteps = parseStructuredMathResponse(result.explanation)
+                                return stepVisibility.currentStepIndex >= allSteps.length - 1
+                              })()}
+                              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                              title="Próximo passo"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                              <span className="hidden sm:inline">Próximo</span>
+                            </button>
+                          )}
+                          
+                          {/* Botão de Favorito */}
+                          <button
+                            onClick={() => toggleFavorite(
+                              result.problem.id, 
+                              result.problem.id ? null : {
+                                text: result.problem.text,
+                                explanation: result.explanation,
+                                processingTime: result.processingTime,
+                                type: result.subType
+                              }
+                            )}
+                            className={`p-2 rounded-lg transition-colors ${
+                              result.problem.is_favorite
+                                ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                                : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                            }`}
+                            title={result.problem.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                          >
+                            <Heart className={`w-5 h-5 ${result.problem.is_favorite ? 'fill-current' : ''}`} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -1032,6 +1113,7 @@ function App() {
                   </div>
                 )}
 
+                {/* ✅ SEÇÃO DE PROBLEMAS SIMILARES (manter igual) */}
                 {result.type === 'similar' && (
                   <div className="space-y-4">
                     <div className="bg-green-50 p-4 rounded-xl border-l-4 border-green-400">
