@@ -522,9 +522,9 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Tirar Foto */}
           <button
-            onClick={onTakePhoto}
-            disabled={isLoading}
-            className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100"
+            onClick={() => alert('📷 Funcionalidade temporariamente desabilitada')}
+            disabled={true}
+            className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100 opacity-50 cursor-not-allowed"
           >
             <Camera className="w-5 h-5" />
             <span>Tirar Foto</span>

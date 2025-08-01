@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Heart, History, Settings, Plus, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+// ✅ NOVOS IMPORTS PARA SISTEMA DE FUNDOS
+import BackgroundSelector from '../ui/BackgroundSelector'
+import BackgroundManager from '../ui/BackgroundManager'
+import useBackground from '../../hooks/useBackground'
 
 const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateCollection, showHistory, onToggleHistory }) => {
   const [collections, setCollections] = useState([])
@@ -10,6 +14,10 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
     name: '',
     color: '#4ECDC4'
   })
+
+  // ✅ ESTADO PARA SISTEMA DE FUNDOS
+  const [showBackgroundSelector, setShowBackgroundSelector] = useState(false)
+  const { backgroundType, changeBackground } = useBackground()
 
   useEffect(() => {
     loadCollections()
@@ -80,7 +88,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
     }
   }
 
-  // ✅ NOVA FUNÇÃO PARA TOGGLE DO SIDEBAR
   const handleToggleSidebar = () => {
     console.log('❤️ Toggle sidebar - Estado atual:', showSidebar)
     setShowSidebar(prev => {
@@ -99,7 +106,9 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    // ✅ ENVOLVER TUDO COM BackgroundManager
+    <BackgroundManager backgroundType={backgroundType}>
+      {/* ✅ REMOVER O DIV COM FUNDO FIXO */}
       <div className="min-h-screen flex flex-col">
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-30">
           <div className="px-4 py-4">
@@ -124,7 +133,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
               </div>
               
               <div className="flex items-center gap-2">
-                {/* ✅ BOTÃO CORRIGIDO COM FUNÇÃO ESPECÍFICA */}
                 <button 
                   onClick={handleToggleSidebar}
                   className={`p-2 rounded-lg transition-colors duration-200 ${
@@ -149,7 +157,12 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
                   <History className="w-5 h-5" />
                 </button>
                 
-                <button className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200 border-2 border-transparent">
+                {/* ✅ BOTÃO DE CONFIGURAÇÕES MODIFICADO */}
+                <button 
+                  onClick={() => setShowBackgroundSelector(true)}
+                  className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200 border-2 border-transparent"
+                  title="Personalizar fundo"
+                >
                   <Settings className="w-5 h-5" />
                 </button>
               </div>
@@ -166,7 +179,7 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
         </footer>
       </div>
 
-      {/* ✅ OVERLAY MELHORADO */}
+      {/* OVERLAY DO SIDEBAR */}
       <AnimatePresence>
         {showSidebar && (
           <motion.div
@@ -182,7 +195,7 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
         )}
       </AnimatePresence>
 
-      {/* ✅ SIDEBAR MELHORADO */}
+      {/* SIDEBAR */}
       <AnimatePresence>
         {showSidebar && (
           <motion.aside
@@ -192,7 +205,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col"
           >
-            {/* ✅ HEADER DO SIDEBAR */}
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-indigo-600">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">📚 Coleções ({collections.length})</h2>
@@ -222,7 +234,6 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
               </div>
             </div>
 
-            {/* ✅ LISTA DE COLEÇÕES MELHORADA */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {collections.length > 0 ? (
                 collections.map((collection) => {
@@ -304,7 +315,7 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
         )}
       </AnimatePresence>
 
-      {/* ✅ MODAL DE CRIAÇÃO INALTERADO */}
+      {/* MODAL DE CRIAÇÃO DE COLEÇÃO */}
       <AnimatePresence>
         {showCreateModal && (
           <motion.div
@@ -416,7 +427,15 @@ const Layout = ({ children, selectedCollection, onCollectionSelect, onCreateColl
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+
+      {/* ✅ MODAL DE SELEÇÃO DE FUNDO */}
+      <BackgroundSelector
+        isOpen={showBackgroundSelector}
+        onClose={() => setShowBackgroundSelector(false)}
+        currentBackground={backgroundType}
+        onSelectBackground={changeBackground}
+      />
+    </BackgroundManager>
   )
 }
 

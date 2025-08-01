@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { AlertCircle, CheckCircle, Loader, RefreshCw } from 'lucide-react'
 import useSystemCheck from '../../hooks/useSystemCheck'
 
+
 const SplashScreen = ({ onComplete }) => {
   const { systemStatus, summary, retryCheck, isReady } = useSystemCheck()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
