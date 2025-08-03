@@ -254,13 +254,12 @@ function App() {
       if (resultData.type === 'detailed') {
         const allSteps = parseStructuredMathResponse(resultData.explanation)
         setStepVisibility({
-          currentStepIndex: 0, // Mostrar apenas primeiro passo
+          currentStepIndex: 0,
           showAllSteps: false,
           totalSteps: allSteps.length
         })
       }
       
-    // Mostrar resultado
     setResult({
       type: 'explanation',
       subType: resultData.type,
@@ -270,7 +269,13 @@ function App() {
       autoCategory: resultData.autoCategory
     })
 
-    // Recarregar histórico para mostrar o novo problema
+    setTimeout(() => {
+      const resultElement = document.querySelector('.bg-white.rounded-2xl.shadow-lg')
+      if (resultElement) {
+        resultElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 100)
+    
     await loadHistory()
     notifyCollectionsChanged() 
     setViewMode('input')
