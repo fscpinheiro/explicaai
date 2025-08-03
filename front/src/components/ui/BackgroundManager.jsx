@@ -4,15 +4,12 @@ const BackgroundManager = ({ backgroundType, children }) => {
   const [vantaEffect, setVantaEffect] = useState(null)
 
   useEffect(() => {
-    // Cleanup do Vanta anterior
     if (vantaEffect) {
       vantaEffect.destroy()
       setVantaEffect(null)
     }
 
-    // Inicializar Vanta Clouds se necessário
     if (backgroundType === 'clouds') {
-      // Aguardar um tick para garantir que o DOM esteja pronto
       setTimeout(() => {
         if (window.VANTA && window.VANTA.CLOUDS) {
           const effect = window.VANTA.CLOUDS({
@@ -28,20 +25,28 @@ const BackgroundManager = ({ backgroundType, children }) => {
             sunColor: 0xff9919,
             sunGlareColor: 0xff6633,
             sunlightColor: 0xff9933,
-            speed: 0.3 // 30%
+            speed: 0.3 
           })
           setVantaEffect(effect)
         }
       }, 100)
     }
 
-    // Cleanup quando componente desmonta ou muda tipo
     return () => {
       if (vantaEffect) {
         vantaEffect.destroy()
       }
     }
   }, [backgroundType])
+
+
+  const getCustomStaticStyle = (colorHex) => {
+    const color = `#${colorHex}`
+        
+    return {
+      background: `linear-gradient(135deg, ${color}22 0%, ${color}44 25%, ${color}66 50%, ${color}44 75%, ${color}22 100%)`
+    }
+  }
 
   const getBackgroundClasses = () => {
     switch (backgroundType) {
@@ -51,7 +56,6 @@ const BackgroundManager = ({ backgroundType, children }) => {
       case 'clouds':
         return "min-h-screen relative"
       
-      // ✅ GRADIENTES ESPECÍFICOS
       case 'gradient-sunset':
         return "min-h-screen animated-gradient-sunset"
       
@@ -64,18 +68,31 @@ const BackgroundManager = ({ backgroundType, children }) => {
       case 'gradient-night':
         return "min-h-screen animated-gradient-night"
       
-      // ✅ COMPATIBILIDADE COM O ANTIGO
       case 'gradient':
         return "min-h-screen animated-gradient-sunset"
       
       default:
+        if (backgroundType?.startsWith('static-')) {
+          return "min-h-screen" 
+        }
         return "min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
     }
   }
 
+  const getCustomStyle = () => {
+    if (backgroundType?.startsWith('static-')) {
+      const colorHex = backgroundType.replace('static-', '')
+      return getCustomStaticStyle(colorHex)
+    }
+    return {}
+  }
+
   return (
-    <div className={getBackgroundClasses()}>
-      {/* Vanta Background para nuvens */}
+    <div 
+      className={getBackgroundClasses()} 
+      style={getCustomStyle()}
+    >
+      
       {backgroundType === 'clouds' && (
         <div 
           id="vanta-bg" 
