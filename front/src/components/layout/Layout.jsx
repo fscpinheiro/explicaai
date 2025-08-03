@@ -19,7 +19,8 @@ const Layout = ({
   showExamples,
   onToggleExamples,
   systemStatus,
-  isLoading
+  isLoading,
+  isTyping
 }) => {
   const [collections, setCollections] = useState([])
   const [showSidebar, setShowSidebar] = useState(false)
@@ -196,7 +197,7 @@ const Layout = ({
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 relative overflow-visible">
                   <AISphere 
-                    state={isLoading ? "processing" : !systemStatus?.canUseAI ? "error" : "idle"}
+                    state={isLoading ? "processing" : isTyping ? "typing" : !systemStatus?.canUseAI ? "error" : "idle"}
                     size="small"
                     className="w-full h-full"
                   />

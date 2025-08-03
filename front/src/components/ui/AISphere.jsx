@@ -19,7 +19,8 @@ const AISphere = ({
   const configs = {
     small: { particleCount: 2000, radius: 4, cameraZ: 12 },
     medium: { particleCount: 4000, radius: 6, cameraZ: 18 },
-    large: { particleCount: 8000, radius: 8, cameraZ: 25 }
+    large: { particleCount: 8000, radius: 8, cameraZ: 25 },
+    fullscreen: { particleCount: 15000, radius: 15, cameraZ: 30 } 
   }
   
   const config = configs[size] || configs.medium
@@ -36,7 +37,8 @@ const AISphere = ({
       antialias: true, 
       alpha: true // fundo transparente
     })
-    renderer.setSize(200, 200) // tamanho fixo, pode ser ajustado via CSS
+    const rendererSize = size === 'fullscreen' ? [window.innerWidth, window.innerHeight] : [200, 200]
+    renderer.setSize(rendererSize[0], rendererSize[1])
     renderer.setClearColor(0x000000, 0) // transparente
     mountRef.current.appendChild(renderer.domElement)
 
@@ -59,7 +61,8 @@ const AISphere = ({
   // Reação a mudanças de estado
   useEffect(() => {
     if (!sceneRef.current) return
-    
+    console.log('🤖 AISphere state mudou para:', state) 
+
     switch (state) {
       case 'idle':
         returnToSphere()
@@ -68,7 +71,7 @@ const AISphere = ({
         fastPulseAnimation()
         break
       case 'thinking':
-        createInterrogation()
+        thinkingWaveAnimation()
         break
       case 'success':
         explosionAnimation()
@@ -81,6 +84,9 @@ const AISphere = ({
         break
       case 'spinning':
         spinAnimation()
+        break
+      case 'typing':
+        fastTypingAnimation()
         break
       default:
         returnToSphere()
@@ -191,6 +197,78 @@ const AISphere = ({
     }
 
     return points
+  }
+
+  function thinkingWaveAnimation() {
+  if (isAnimatingRef.current || !particlesRef.current) return
+  
+  const startTime = clockRef.current.getElapsedTime()
+  const duration = 6
+  const positions = particlesRef.current.geometry.attributes.position.array
+  const originalPositions = [...positions]
+  
+  function wave() {
+      const elapsed = clockRef.current.getElapsedTime() - startTime
+      
+      if (elapsed < duration) {
+        // Ondas suaves + rotação lenta
+        for (let i = 0; i < positions.length; i += 3) {
+          const x = originalPositions[i]
+          const y = originalPositions[i + 1]
+          const z = originalPositions[i + 2]
+          
+          const distFromCenter = Math.sqrt(x * x + y * y + z * z)
+          const wave1 = Math.sin(elapsed * 2 - distFromCenter * 0.2) * 0.8
+          const wave2 = Math.sin(elapsed * 3 + distFromCenter * 0.1) * 0.5
+          
+          const factor = 1 + (wave1 + wave2) * 0.15
+          positions[i] = x * factor
+          positions[i + 1] = y * factor
+          positions[i + 2] = z * factor
+        }
+        
+        // Rotação suave
+        particlesRef.current.rotation.y += 0.01
+        particlesRef.current.rotation.z += 0.005
+        
+        particlesRef.current.geometry.attributes.position.needsUpdate = true
+        requestAnimationFrame(wave)
+      } else {
+        // Resetar para esfera normal
+        for (let i = 0; i < positions.length; i++) {
+          positions[i] = originalPositions[i]
+        }
+        particlesRef.current.geometry.attributes.position.needsUpdate = true
+        particlesRef.current.rotation.set(0, 0, 0)
+      }
+    }
+    
+    wave()
+  }
+
+  function fastTypingAnimation() {
+    if (!particlesRef.current) return
+    
+    const startTime = clockRef.current.getElapsedTime()
+    const duration = 2 // 2 segundos (vai ser interrompido quando parar de digitar)
+    
+    function typeRotation() {
+      const elapsed = clockRef.current.getElapsedTime() - startTime
+      
+      if (elapsed < duration && currentStateRef.current !== 'typing') {
+        return // Parar se mudou de state
+      }
+      
+      // Rotação 3x mais rápida que o normal
+      particlesRef.current.rotation.y += 0.006 // Normal é 0.002
+      particlesRef.current.rotation.x += 0.001
+      
+      if (elapsed < duration) {
+        requestAnimationFrame(typeRotation)
+      }
+    }
+    
+    typeRotation()
   }
 
   function createInterrogationPoints() {

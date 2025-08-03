@@ -16,6 +16,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [history, setHistory] = useState([])
+  const [isTyping, setIsTyping] = useState(false)
   const [selectedCollection, setSelectedCollection] = useState(null)
   const [filteredHistory, setFilteredHistory] = useState([])
   const [showHistory, setShowHistory] = useState(false)
@@ -891,6 +892,7 @@ function App() {
           onToggleExamples={() => setShowExamples(prev => !prev)}
           systemStatus={systemStatus}
           isLoading={isLoading}
+          isTyping={isTyping}
         >
           <div className="space-y-8">
             {/* ✅ BANNER DE STATUS OFFLINE - ADICIONAR APÓS space-y-8 */}
@@ -999,6 +1001,7 @@ function App() {
                 isOllamaOnline={systemStatus.canUseAI}
                 showExamples={showExamples}
                 onToggleExamples={() => setShowExamples(prev => !prev)}
+                onTypingChange={setIsTyping}
               />
               {/* BOTÃO TEMPORÁRIO */}
               {result && (
@@ -1017,20 +1020,7 @@ function App() {
             </>
             )}
 
-            
-            
-            {/* Loading */}
-            {isLoading && (
-              <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 text-center">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  <div className="text-lg text-gray-600">
-                    <p className="font-semibold">🤖 Processando com Gemma...</p>
-                    <p className="text-sm text-gray-500">Isso pode levar alguns segundos</p>
-                  </div>
-                </div>
-              </div>
-            )}
+           
 
             {/* ✅ RESULTADOS - apenas no modo input */}
             {viewMode === 'input' && result && !isLoading && (

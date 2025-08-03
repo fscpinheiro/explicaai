@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Calculator, Camera, Sparkles, BookOpen, X, HelpCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import CollectionSelectorModal from '../ui/CollectionSelectorModal' 
 import RotatingExamples from '../ui/RotatingExamples'
 
-const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIsLoading, isOllamaOnline = true, showExamples, onToggleExamples }) => {
+const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIsLoading, isOllamaOnline = true, showExamples, onToggleExamples, onTypingChange }) => {
   const [problem, setProblem] = useState('')
   const [showSymbols, setShowSymbols] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [currentSymbol, setCurrentSymbol] = useState(null)
+  const [isTyping, setIsTyping] = useState(false)
+  const typingTimeoutRef = useRef(null)  
   
 
   // Símbolos matemáticos organizados por categoria
@@ -17,6 +19,17 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
     powers: ['x²', 'x³', 'xⁿ', '√', '∛', 'ⁿ√', '1/x', 'a/b'],
     functions: ['sen', 'cos', 'tan', 'log', 'ln', 'π', 'e', '|x|'],
     advanced: ['∫', '∑', '∏', '∂', '∞', '∆', '∈', '∉']
+  }
+
+  const handleInputChange = (e) => {
+    setProblem(e.target.value)
+    onTypingChange?.(true)    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+    typingTimeoutRef.current = setTimeout(() => {
+      onTypingChange?.(false)
+    }, 500)
   }
 
   const symbolCategories = {
@@ -460,7 +473,7 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
           <textarea
             id="math-input"
             value={problem}
-            onChange={(e) => setProblem(e.target.value)}
+            onChange={handleInputChange}
             placeholder={isOllamaOnline ? 
               "Digite seu problema aqui..." : 
               "IA offline - Digite para estudar problemas salvos apenas..."
