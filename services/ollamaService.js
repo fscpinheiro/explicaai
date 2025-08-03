@@ -151,6 +151,13 @@ class OllamaService {
 
   PROBLEMA: "${problem}"
 
+  IMPORTANTE:
+- Problemas simples (ex: 2x+5=13): 3-10 passos
+- Problemas médios (ex: sistema 2x2): 5-10 passos  
+- Problemas complexos (ex: derivadas, integrais): 8-10 passos
+- SEMPRE siga o formato: PASSO X, Explicação, Cálculo, Resultado
+- Nunca repetir passos, pode fazer em menos se achar desnecessario tantos passos
+
   PASSO 1: [Título claro do primeiro passo]
   Explicação: [Explique o que fazer e por quê]
   Cálculo: [Mostre a operação matemática]
