@@ -3,6 +3,7 @@ import { Calculator, Camera, Sparkles, BookOpen, X, HelpCircle } from 'lucide-re
 import { motion, AnimatePresence } from 'framer-motion'
 import CollectionSelectorModal from '../ui/CollectionSelectorModal' 
 import RotatingExamples from '../ui/RotatingExamples'
+import { parseStructuredMathResponse, isStructuredResponse, extractFinalAnswer } from "../../utils/mathParser"
 
 const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIsLoading, isOllamaOnline = true, showExamples, onToggleExamples, onTypingChange }) => {
   const [problem, setProblem] = useState('')
@@ -273,7 +274,6 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
       setModalValues({})
       setShowModal(true)
     } else {
-      // Símbolo simples - inserir diretamente
       insertText(symbol)
     }
   }
@@ -310,45 +310,74 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
     setModalValues({})
   }
 
-  // Função para explicar problema (conecta com API real)
-   const handleExplain = async (type = 'detailed') => {
-  console.log('🚨 [FRONTEND] Iniciando handleExplain com type:', type)
-  if (!problem.trim()) {
-    alert('Por favor, digite um problema de matemática.')
-    return
-  }
+  const handleExplain = async (type = 'detailed') => {
+    console.log('🚨 [FRONTEND] Iniciando handleExplain com type:', type)
+    if (!problem.trim()) {
+      alert('Por favor, digite um problema de matemática.')
+      return
+    }
 
-  // ✅ CRIAR AbortController
-  const controller = new AbortController()
-  setIsLoading(true)
+    const controller = new AbortController()
+    setIsLoading(true)
 
-  // ✅ DEFINIR MENSAGEM DE LOADING
-  const message = type === 'answer' ? 'Calculando resposta...' : 'Resolvendo passo a passo...'
+    const message = type === 'answer' ? 'Calculando resposta...' : 'Resolvendo passo a passo...'
   
-  // ✅ PASSAR CONTROLLER E MENSAGEM PARA O PAI
-  if (window.setAbortController) {
-    window.setAbortController(controller)
-  }
-  if (window.setLoadingMessage) {
-    window.setLoadingMessage(message)
-  }
+    if (window.setAbortController) {
+      window.setAbortController(controller)
+    }
 
-  try {
-    const response = await fetch('/api/problems/explain-text', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        text: problem.trim(),
-        type: type
-      }),
-      signal: controller.signal  // ✅ ADICIONAR SIGNAL
-    })
+    if (window.setLoadingMessage) {
+      window.setLoadingMessage(message)
+    }
+
+    try {
+      const response = await fetch('/api/problems/explain-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          text: problem.trim(),
+          type: type
+        }),
+        signal: controller.signal  
+      })
     
     const data = await response.json()
+    let finalData = data
     
-    if (data.success) {
+    if (data.success && type === 'detailed' && !isStructuredResponse(data.explanation)) {
+      console.log('⚠️ Formato inválido, tentando novamente com prompt mais rígido...')
+      
+      try {
+        const retryResponse = await fetch('/api/problems/explain-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            text: problem.trim(),
+            type: 'detailed',
+            strict: true 
+          }),
+          signal: controller.signal
+        })
+        
+        const retryData = await retryResponse.json()
+        
+        if (retryData.success && isStructuredResponse(retryData.explanation)) {
+          console.log('✅ Segunda tentativa funcionou!')
+          finalData = retryData
+        } else {
+          console.log('❌ Segunda tentativa falhou também')
+        }
+      } catch (retryError) {
+        console.log('❌ Erro na segunda tentativa:', retryError.message)
+      }
+    }
+    
+    // Processar resultado final
+    if (finalData.success) {
       onExplain({
         type: type,
         problem: {
@@ -356,15 +385,14 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
           is_favorite: false,
           id: null
         },
-        explanation: data.explanation,
-        processingTime: data.processingTime || 0,
-        autoCategory: data.autoCategory || null,
+        explanation: finalData.explanation,
+        processingTime: finalData.processingTime || 0,
+        autoCategory: finalData.autoCategory || null,
         isTemporary: true
       })
-
       setProblem('')
     } else {
-      alert('Erro: ' + (data.message || data.error))
+      alert('Erro: ' + (finalData.message || finalData.error))
     }
   } catch (error) {
     if (error.name === 'AbortError') {
@@ -429,13 +457,11 @@ const MathInput = ({ onExplain, onGenerateSimilar, onTakePhoto, isLoading, setIs
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* Card Principal */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100"
       >
-        {/* Título */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             Digite ou cole seu problema de matemática
