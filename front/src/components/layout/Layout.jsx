@@ -7,6 +7,7 @@ import BackgroundManager from '../ui/BackgroundManager'
 import useBackground from '../../hooks/useBackground'
 import SettingsModal from '../ui/SettingsModal'
 import AISphere from '../ui/AISphere'
+import DeleteCollectionModal from '../ui/DeleteCollectionModal'
 
 const Layout = ({ 
   children, 
@@ -33,6 +34,12 @@ const Layout = ({
   const { backgroundType, changeBackground } = useBackground()
 
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+
+  const [deleteCollectionModal, setDeleteCollectionModal] = useState({
+  isOpen: false,
+  collection: null,
+  isLoading: false
+})
 
   useEffect(() => {
     loadCollections()
@@ -64,6 +71,64 @@ const Layout = ({
     } catch (error) {
       console.error('Erro ao carregar coleções:', error)
     }
+  }
+
+  const handleDeleteCollection = (collection) => {
+    console.log('🗑️ Abrindo modal para excluir:', collection.name)
+    setDeleteCollectionModal({
+      isOpen: true,
+      collection: collection,
+      isLoading: false
+    })
+  }
+
+  const confirmDeleteCollection = async () => {
+    if (!deleteCollectionModal.collection) return
+
+    setDeleteCollectionModal(prev => ({ ...prev, isLoading: true }))
+
+    try {
+      const response = await fetch(`/api/collections/${deleteCollectionModal.collection.id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        console.log('✅ Coleção excluída com sucesso!')
+        console.log(`📦 ${data.problemsMigrated} problemas migrados para Favoritos`)
+        
+        // Recarregar lista de coleções
+        await loadCollections()
+        
+        // Fechar modal
+        setDeleteCollectionModal({
+          isOpen: false,
+          collection: null,
+          isLoading: false
+        })
+
+        // Se estava vendo a coleção excluída, voltar para todas
+        if (selectedCollection === deleteCollectionModal.collection.id) {
+          onCollectionSelect(null)
+        }
+
+      } else {
+        alert('Erro ao excluir coleção: ' + (data.message || data.error))
+        setDeleteCollectionModal(prev => ({ ...prev, isLoading: false }))
+      }
+    } catch (error) {
+      alert('Erro ao excluir coleção: ' + error.message)
+      setDeleteCollectionModal(prev => ({ ...prev, isLoading: false }))
+    }
+  }
+
+  const cancelDeleteCollection = () => {
+    setDeleteCollectionModal({
+      isOpen: false,
+      collection: null,
+      isLoading: false
+    })
   }
 
   const handleCreateCollection = async () => {
@@ -222,7 +287,7 @@ const Layout = ({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -400, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col"
+            className="fixed top-0 left-0 h-full w-100 bg-white shadow-2xl z-50 flex flex-col"
           >
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-indigo-600">
               <div className="flex items-center justify-between">
@@ -259,61 +324,82 @@ const Layout = ({
                   const problemCount = parseInt(collection.problem_count) || 0
                   
                   return (
-                    <motion.button
-                      key={collection.id}
-                      onClick={() => {
-                        console.log('🖱️ Coleção selecionada:', collection.name)
-                        onCollectionSelect && onCollectionSelect(collection.id)
-                        setShowSidebar(false)
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full text-left p-3 rounded-xl border transition-all duration-200 ${
-                        selectedCollection === collection.id
-                          ? 'border-2 shadow-lg bg-blue-50'
-                          : 'border border-gray-200 hover:border-gray-300 hover:shadow-md bg-white'
-                      }`}
-                      style={{
-                        borderColor: selectedCollection === collection.id ? collection.color : undefined
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span 
-                            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-md"
-                            style={{ backgroundColor: collection.color }}
-                          >
-                            {collection.icon || '📚'}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-800 truncate">
-                              {collection.name}
-                            </h3>
-                            {collection.description && (
-                              <p className="text-xs text-gray-500 truncate">
-                                {collection.description}
-                              </p>
+                    <div key={collection.id} className="flex items-center gap-2 group">
+                      <motion.button
+                        onClick={() => {
+                          console.log('🖱️ Coleção selecionada:', collection.name)
+                          onCollectionSelect && onCollectionSelect(collection.id)
+                          setShowSidebar(false)
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`flex-1 text-left p-3 rounded-xl border transition-all duration-200 ${
+                          selectedCollection === collection.id
+                            ? 'border-2 shadow-lg bg-blue-50'
+                            : 'border border-gray-200 hover:border-gray-300 hover:shadow-md bg-white'
+                        }`}
+                        style={{
+                          borderColor: selectedCollection === collection.id ? collection.color : undefined
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span 
+                              className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-md"
+                              style={{ backgroundColor: collection.color }}
+                            >
+                              {collection.icon || '📚'}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-800 truncate">
+                                {collection.name}
+                              </h3>
+                              {collection.description && (
+                                <p className="text-xs text-gray-500 truncate">
+                                  {collection.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col items-end gap-1">
+                            <span 
+                              className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-bold rounded-full text-white shadow-sm"
+                              style={{ 
+                                backgroundColor: collection.color,
+                                color: 'white'
+                              }}
+                            >
+                              {problemCount}
+                            </span>
+                            
+                            {collection.is_system === 1 && (
+                              <div className="text-xs text-gray-400">Sistema</div>
                             )}
                           </div>
                         </div>
-                        
-                        <div className="flex flex-col items-end gap-1">
-                          <span 
-                            className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-bold rounded-full text-white shadow-sm"
-                            style={{ 
-                              backgroundColor: collection.color,
-                              color: 'white'
-                            }}
-                          >
-                            {problemCount}
-                          </span>
-                          
-                          {collection.is_system === 1 && (
-                            <div className="text-xs text-gray-400">Sistema</div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.button>
+                      </motion.button>
+
+                      {collection.is_system !== 1 ? (
+                        <motion.button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleDeleteCollection(collection)
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-2 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 rounded-lg border border-red-200 hover:border-red-300 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                          title={`Excluir coleção "${collection.name}"`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </motion.button>
+                      ) : (
+                        <div className="w-10 h-10" />
+                      )}
+                    </div>
                   )
                 })
               ) : (
@@ -459,6 +545,15 @@ const Layout = ({
         onClose={() => setShowBackgroundSelector(false)}
         currentBackground={backgroundType}
         onSelectBackground={changeBackground}
+      />
+
+      {/* Modal de Exclusão de Coleção */}
+      <DeleteCollectionModal
+        isOpen={deleteCollectionModal.isOpen}
+        onConfirm={confirmDeleteCollection}
+        onCancel={cancelDeleteCollection}
+        collection={deleteCollectionModal.collection}
+        isLoading={deleteCollectionModal.isLoading}
       />
     </BackgroundManager>
   )
