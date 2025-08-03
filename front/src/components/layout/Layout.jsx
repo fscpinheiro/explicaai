@@ -193,7 +193,7 @@ const Layout = ({
           {children}
         </main>
 
-        <footer className="mt-16 py-8 text-center text-gray-500 text-sm border-t border-gray-200">
+        <footer className="fixed bottom-0 left-0 right-0 py-3 text-center text-gray-400 text-xs bg-white/70 backdrop-blur-sm border-t border-white/30 z-10">
           <p>ExplicaAI - Projeto Social para Educação Matemática Offline</p>
         </footer>
       </div>
