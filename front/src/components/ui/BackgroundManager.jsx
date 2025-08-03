@@ -51,8 +51,22 @@ const BackgroundManager = ({ backgroundType, children }) => {
       case 'clouds':
         return "min-h-screen relative"
       
+      // ✅ GRADIENTES ESPECÍFICOS
+      case 'gradient-sunset':
+        return "min-h-screen animated-gradient-sunset"
+      
+      case 'gradient-ocean':
+        return "min-h-screen animated-gradient-ocean"
+      
+      case 'gradient-forest':
+        return "min-h-screen animated-gradient-forest"
+      
+      case 'gradient-night':
+        return "min-h-screen animated-gradient-night"
+      
+      // ✅ COMPATIBILIDADE COM O ANTIGO
       case 'gradient':
-        return "min-h-screen animated-gradient"
+        return "min-h-screen animated-gradient-sunset"
       
       default:
         return "min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"

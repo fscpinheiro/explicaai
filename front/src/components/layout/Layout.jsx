@@ -125,11 +125,11 @@ const Layout = ({
     <BackgroundManager backgroundType={backgroundType}>
       {/* ✅ REMOVER O DIV COM FUNDO FIXO */}
       <div className="min-h-screen flex flex-col">
-        <header className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 sticky top-0 z-30">
-          <div className="px-4 py-4">
+        <header className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 sticky top-0 z-30 overflow-visible">
+          <div className="px-4 py-4 overflow-visible">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12">
+                <div className="w-12 h-12 relative overflow-visible">
                   <AISphere 
                     state={isLoading ? "processing" : !systemStatus?.canUseAI ? "error" : "idle"}
                     size="small"

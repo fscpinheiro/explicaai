@@ -22,21 +22,85 @@
 
 
 
-/* Gradiente animado */
-.animated-gradient {
-  background: linear-gradient(-45deg, #3f51b1 0%, #5a55ae 13%, #7b5fac 25%, #8f6aae 38%, #a86aa4 50%, #cc6b8e 62%, #f18271 75%, #f3a469 87%, #f7c978 100%);
+/* 1. Sunset - Roxo → Laranja → Amarelo */
+.animated-gradient-sunset {
+  background: linear-gradient(-45deg, #8B5CF6 0%, #A855F7 25%, #EC4899 50%, #F97316 75%, #EAB308 100%);
   background-size: 400% 400%;
-  animation: animateGradient 7.5s ease-in-out infinite;
+  animation: animateGradientSunset 80s ease-in-out infinite;
 }
 
-@keyframes animateGradient {
+@keyframes animateGradientSunset {
   0% {
-    background-position: 0 50%;
+    background-position: 0% 50%;
   }
   50% {
     background-position: 100% 50%;
   }
   100% {
-    background-position: 0 50%;
+    background-position: 0% 50%;
   }
+}
+
+/* 2. Ocean - Azul escuro → Azul claro → Verde água */
+.animated-gradient-ocean {
+  background: linear-gradient(-45deg, #1E3A8A 0%, #3B82F6 25%, #06B6D4 50%, #10B981 75%, #34D399 100%);
+  background-size: 400% 400%;
+  animation: animateGradientOcean 80s ease-in-out infinite;
+}
+
+@keyframes animateGradientOcean {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 3. Forest - Verde escuro → Verde claro → Dourado */
+.animated-gradient-forest {
+  background: linear-gradient(-45deg, #065F46 0%, #059669 25%, #10B981 50%, #34D399 75%, #FCD34D 100%);
+  background-size: 400% 400%;
+  animation: animateGradientForest 80s ease-in-out infinite;
+}
+
+@keyframes animateGradientForest {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 4. Night - Roxo escuro → Rosa → Azul */
+.animated-gradient-night {
+  background: linear-gradient(-45deg, #581C87 0%, #7C3AED 25%, #EC4899 50%, #3B82F6 75%, #1D4ED8 100%);
+  background-size: 400% 400%;
+  animation: animateGradientNight 80s ease-in-out infinite;
+}
+
+@keyframes animateGradientNight {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ✅ MANTER COMPATIBILIDADE COM O ANTIGO */
+.animated-gradient {
+  background: linear-gradient(-45deg, #8B5CF6 0%, #A855F7 25%, #EC4899 50%, #F97316 75%, #EAB308 100%);
+  background-size: 400% 400%;
+  animation: animateGradientSunset 80s ease-in-out infinite;
 }

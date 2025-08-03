@@ -11,11 +11,32 @@ const BackgroundSelector = ({ isOpen, onClose, currentBackground, onSelectBackgr
       preview: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 50%, #f3e8ff 100%)'
     },
     {
-      id: 'gradient',
-      name: 'Gradiente Animado',
-      description: 'Cores em movimento contínuo',
+      id: 'gradient-sunset',
+      name: 'Pôr do Sol',
+      description: 'Roxo → Laranja → Amarelo',
       icon: <Zap className="w-6 h-6" />,
-      preview: 'linear-gradient(-45deg, #3f51b1 0%, #5a55ae 13%, #7b5fac 25%, #8f6aae 38%, #a86aa4 50%, #cc6b8e 62%, #f18271 75%, #f3a469 87%, #f7c978 100%)'
+      preview: 'linear-gradient(-45deg, #8B5CF6 0%, #A855F7 25%, #EC4899 50%, #F97316 75%, #EAB308 100%)'
+    },
+    {
+      id: 'gradient-ocean',
+      name: 'Oceano',
+      description: 'Azul escuro → Verde água',
+      icon: <Zap className="w-6 h-6" />,
+      preview: 'linear-gradient(-45deg, #1E3A8A 0%, #3B82F6 25%, #06B6D4 50%, #10B981 75%, #34D399 100%)'
+    },
+    {
+      id: 'gradient-forest',
+      name: 'Floresta',
+      description: 'Verde escuro → Dourado',
+      icon: <Zap className="w-6 h-6" />,
+      preview: 'linear-gradient(-45deg, #065F46 0%, #059669 25%, #10B981 50%, #34D399 75%, #FCD34D 100%)'
+    },
+    {
+      id: 'gradient-night',
+      name: 'Noite',
+      description: 'Roxo escuro → Rosa → Azul',
+      icon: <Zap className="w-6 h-6" />,
+      preview: 'linear-gradient(-45deg, #581C87 0%, #7C3AED 25%, #EC4899 50%, #3B82F6 75%, #1D4ED8 100%)'
     }
   ]
 
@@ -50,7 +71,7 @@ const BackgroundSelector = ({ isOpen, onClose, currentBackground, onSelectBackgr
             </div>
 
             {/* Opções de Fundo */}
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {backgrounds.map((bg) => (
                 <button
                   key={bg.id}
@@ -67,9 +88,14 @@ const BackgroundSelector = ({ isOpen, onClose, currentBackground, onSelectBackgr
                   <div className="flex items-center gap-4">
                     {/* Preview */}
                     <div 
-                      className="w-16 h-12 rounded-lg shadow-md border"
+                      className="w-16 h-12 rounded-lg shadow-md border relative overflow-hidden"
                       style={{ background: bg.preview }}
-                    />
+                    >
+                      {/* Indicador de animação para gradientes */}
+                      {bg.id.startsWith('gradient-') && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                      )}
+                    </div>
                     
                     {/* Ícone */}
                     <div className={`p-2 rounded-lg ${
@@ -100,13 +126,7 @@ const BackgroundSelector = ({ isOpen, onClose, currentBackground, onSelectBackgr
                 </button>
               ))}
             </div>
-
-            {/* Info */}
-            <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-700">
-                💡 <strong>Dica:</strong> O fundo "Nuvens 3D" requer conexão com internet para carregar a biblioteca de animação.
-              </p>
-            </div>
+            
           </motion.div>
         </motion.div>
       )}
