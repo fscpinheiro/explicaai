@@ -147,17 +147,73 @@ class OllamaService {
    * Criar prompt para explicação matemática
    */
   createMathPrompt(problem) {
-    return `Você é um professor de matemática muito didático. Resolva este problema seguindo EXATAMENTE o formato abaixo:
+    const complexity = this.detectComplexity(problem);
+    
+    if (complexity === 'simple') {
+      return `Você é um professor de matemática prático. Resolva este problema SIMPLES de forma DIRETA:
 
   PROBLEMA: "${problem}"
 
-  IMPORTANTE:
-- Problemas simples (ex: 2x+5=13): 3-10 passos
-- Problemas médios (ex: sistema 2x2): 5-10 passos  
-- Problemas complexos (ex: derivadas, integrais): 8-10 passos
-- SEMPRE siga o formato: PASSO X, Explicação, Cálculo, Resultado
-- Nunca repetir passos, pode fazer em menos se achar desnecessario tantos passos
+  INSTRUÇÕES:
+  - Este é um problema SIMPLES, resolva em 1-3 passos diretos
+  - NÃO complique com decomposições desnecessárias
+  - Seja objetivo e prático
 
+  FORMATO:
+  PASSO 1: [Operação direta]
+  Explicação: [Breve explicação do que fazer]
+  Cálculo: [Operação matemática]
+  Resultado: [Resultado direto]
+
+  VERIFICAÇÃO:
+  Explicação: [Conferir se está correto]
+  Cálculo: [Verificação rápida]
+  Resultado: [Confirmação]
+
+  RESPOSTA FINAL: [Resultado destacado]
+
+  IMPORTANTE: Mantenha SIMPLES e DIRETO!`;
+    }
+    
+    if (complexity === 'complex') {
+      return `Você é um professor de matemática especializado. Resolva este problema COMPLEXO passo a passo:
+
+  PROBLEMA: "${problem}"
+
+  INSTRUÇÕES:
+  - Este é um problema COMPLEXO, pode usar 5-10 passos
+  - Explique conceitos importantes
+  - Seja didático e detalhado
+
+  FORMATO:
+  PASSO 1: [Título claro do primeiro passo]
+  Explicação: [Explique o conceito e por quê]
+  Cálculo: [Operação matemática detalhada]
+  Resultado: [Resultado deste passo]
+
+  [Continue com PASSO 2, PASSO 3, etc conforme necessário]
+
+  VERIFICAÇÃO:
+  Explicação: [Substitua o resultado na equação original]
+  Cálculo: [Mostre a verificação completa]
+  Resultado: [Confirmação se está correto]
+
+  RESPOSTA FINAL: [Destaque a resposta de forma clara]
+
+  IMPORTANTE: Use EXATAMENTE os rótulos "PASSO X:", "Explicação:", "Cálculo:", "Resultado:"`;
+    }
+    
+    // Problemas médios (padrão atual melhorado)
+    return `Você é um professor de matemática didático. Resolva este problema seguindo o formato:
+
+  PROBLEMA: "${problem}"
+
+  INSTRUÇÕES:
+  - Use 3-6 passos conforme necessário
+  - Seja claro e educativo
+  - Mantenha consistência no formato
+
+  FORMATO:
   PASSO 1: [Título claro do primeiro passo]
   Explicação: [Explique o que fazer e por quê]
   Cálculo: [Mostre a operação matemática]
@@ -168,7 +224,7 @@ class OllamaService {
   Cálculo: [Mostre a operação matemática]
   Resultado: [Resultado deste passo]
 
-  [Continue com PASSO 3, PASSO 4, etc conforme necessário]
+  [Continue conforme necessário]
 
   VERIFICAÇÃO:
   Explicação: [Substitua o resultado na equação original para confirmar]
@@ -177,11 +233,7 @@ class OllamaService {
 
   RESPOSTA FINAL: [Destaque a resposta de forma clara]
 
-  IMPORTANTE:
-  - Use EXATAMENTE os rótulos "PASSO X:", "Explicação:", "Cálculo:", "Resultado:"
-  - Seja claro e didático
-  - Sempre inclua a VERIFICAÇÃO
-  - Mantenha cada passo simples e focado`;
+  IMPORTANTE: Use EXATAMENTE os rótulos "PASSO X:", "Explicação:", "Cálculo:", "Resultado:"`;
   }
 
   /**
@@ -354,7 +406,7 @@ Use linguagem clara e didática para estudantes.`;
   /**
  * Criar prompt para gerar exercícios similares
  */
-createSimilarPrompt(originalProblem) {
+  createSimilarPrompt(originalProblem) {
     return `Você é um professor de matemática criativo. Baseado neste problema original, crie 3 exercícios similares:
 
   PROBLEMA ORIGINAL: "${originalProblem}"
@@ -380,6 +432,44 @@ createSimilarPrompt(originalProblem) {
 
   EXERCÍCIOS SIMILARES:`;
   }
+
+  /**
+   * Detectar complexidade do problema matemático
+   */
+  detectComplexity(problem) {
+    const text = problem.toLowerCase().trim();
+    
+    // Problemas SIMPLES (1-2 passos diretos)
+    const simplePatterns = [
+      /^\d+\s*[+\-*/]\s*\d+$/, // 36*6, 25+17
+      /^\d+\s*[+\-*/]\s*\d+\s*[+\-*/]\s*\d+$/, // 2+3*4
+      /^x\s*[+\-]\s*\d+\s*=\s*\d+$/, // x+5=13
+      /^\d*x\s*=\s*\d+$/, // 2x=10
+    ];
+    
+    // Problemas COMPLEXOS
+    const complexPatterns = [
+      /sistema|equação.*equação/i,
+      /integral|derivada|limite/i,
+      /sen\(|cos\(|tan\(|log\(|ln\(/i,
+      /sqrt|raiz|√/i,
+      /matriz|determinante/i
+    ];
+    
+    // Verificar se é simples
+    if (simplePatterns.some(pattern => pattern.test(text))) {
+      return 'simple';
+    }
+    
+    // Verificar se é complexo
+    if (complexPatterns.some(pattern => pattern.test(text))) {
+      return 'complex';
+    }
+    
+    // Padrão: médio
+    return 'medium';
+  }
+
 }
 
 
