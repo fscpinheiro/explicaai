@@ -10,18 +10,17 @@ export const parseStructuredMathResponse = (responseText) => {
     
     let currentStep = null
     let stepCounter = 1
+    let hasVerification = false // Controlar duplicação
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
       
       // Detectar início de passo
       if (line.match(/^PASSO \d+:/)) {
-        // Salvar passo anterior se existir
         if (currentStep) {
           steps.push(currentStep)
         }
         
-        // Iniciar novo passo
         currentStep = {
           numero: stepCounter++,
           titulo: line.replace(/^PASSO \d+:\s*/, ''),
@@ -29,29 +28,26 @@ export const parseStructuredMathResponse = (responseText) => {
         }
       }
       
-      // Detectar verificação
-      else if (line.match(/^VERIFICAÇÃO:/)) {
-        // Salvar passo anterior se existir
+      // Detectar verificação (APENAS UMA VEZ)
+      else if (line.match(/^VERIFICAÇÃO:/) && !hasVerification) {
         if (currentStep) {
           steps.push(currentStep)
         }
         
-        // Iniciar verificação
         currentStep = {
           numero: '✓',
           titulo: 'Verificação',
           type: 'verificacao'
         }
+        hasVerification = true // Marcar que já temos
       }
       
       // Detectar resposta final
       else if (line.match(/^RESPOSTA FINAL:/)) {
-        // Salvar passo anterior se existir
         if (currentStep) {
           steps.push(currentStep)
         }
         
-        // Criar passo de resposta final
         const resposta = line.replace(/^RESPOSTA FINAL:\s*/, '')
         steps.push({
           numero: '🎯',
@@ -59,7 +55,7 @@ export const parseStructuredMathResponse = (responseText) => {
           type: 'resposta',
           resultado: resposta
         })
-        break
+        break // PARAR aqui para evitar processar mais
       }
       
       // Processar campos do passo atual
@@ -73,26 +69,18 @@ export const parseStructuredMathResponse = (responseText) => {
         else if (line.startsWith('Resultado:')) {
           currentStep.resultado = line.replace(/^Resultado:\s*/, '')
         }
-        // Se linha não tem prefixo, adicionar à explicação
-        else if (!line.includes(':') && currentStep.explicacao) {
-          currentStep.explicacao += ' ' + line
-        }
       }
     }
-    
-    // Salvar último passo se existir
-    if (currentStep && currentStep.type !== 'resposta') {
+
+    // Adicionar último passo se não foi adicionado
+    if (currentStep && !steps.find(s => s.type === currentStep.type)) {
       steps.push(currentStep)
     }
 
-    console.log('📝 Parsed steps:', steps)
-    return steps
-
+    return steps.length > 0 ? steps : null
   } catch (error) {
     console.error('❌ Erro no parser:', error)
-    
-    // Fallback para formato antigo
-    return parseUnstructuredResponse(responseText)
+    return null
   }
 }
 

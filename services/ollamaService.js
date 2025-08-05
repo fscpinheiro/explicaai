@@ -150,90 +150,50 @@ class OllamaService {
     const complexity = this.detectComplexity(problem);
     
     if (complexity === 'simple') {
-      return `Você é um professor de matemática prático. Resolva este problema SIMPLES de forma DIRETA:
+      return `Você é um professor de matemática. Resolva este problema simples:
 
   PROBLEMA: "${problem}"
 
-  INSTRUÇÕES:
-  - Este é um problema SIMPLES, resolva em 1-3 passos diretos
-  - NÃO complique com decomposições desnecessárias
-  - Seja objetivo e prático
+  Resolva de forma direta seguindo este formato:
 
-  FORMATO:
-  PASSO 1: [Operação direta]
-  Explicação: [Breve explicação do que fazer]
-  Cálculo: [Operação matemática]
-  Resultado: [Resultado direto]
+  PASSO 1: Operação Direta
+  Explicação: O que vamos fazer
+  Cálculo: ${problem}
+  Resultado: [resposta numérica]
 
   VERIFICAÇÃO:
-  Explicação: [Conferir se está correto]
-  Cálculo: [Verificação rápida]
-  Resultado: [Confirmação]
+  Explicação: Conferindo o resultado
+  Cálculo: [verificação]
+  Resultado: [confirmação]
 
-  RESPOSTA FINAL: [Resultado destacado]
-
-  IMPORTANTE: Mantenha SIMPLES e DIRETO!`;
+  RESPOSTA FINAL: [resposta destacada]`;
     }
     
-    if (complexity === 'complex') {
-      return `Você é um professor de matemática especializado. Resolva este problema COMPLEXO passo a passo:
+    // Para médio e complexo
+    return `Você é um professor de matemática. Resolva este problema:
 
   PROBLEMA: "${problem}"
 
-  INSTRUÇÕES:
-  - Este é um problema COMPLEXO, pode usar 5-10 passos
-  - Explique conceitos importantes
-  - Seja didático e detalhado
+  Resolva seguindo este formato exato:
 
-  FORMATO:
-  PASSO 1: [Título claro do primeiro passo]
-  Explicação: [Explique o conceito e por quê]
-  Cálculo: [Operação matemática detalhada]
-  Resultado: [Resultado deste passo]
+  PASSO 1: Primeiro Passo
+  Explicação: O que fazer neste passo
+  Cálculo: operação matemática
+  Resultado: resultado do passo
 
-  [Continue com PASSO 2, PASSO 3, etc conforme necessário]
-
-  VERIFICAÇÃO:
-  Explicação: [Substitua o resultado na equação original]
-  Cálculo: [Mostre a verificação completa]
-  Resultado: [Confirmação se está correto]
-
-  RESPOSTA FINAL: [Destaque a resposta de forma clara]
-
-  IMPORTANTE: Use EXATAMENTE os rótulos "PASSO X:", "Explicação:", "Cálculo:", "Resultado:"`;
-    }
-    
-    // Problemas médios (padrão atual melhorado)
-    return `Você é um professor de matemática didático. Resolva este problema seguindo o formato:
-
-  PROBLEMA: "${problem}"
-
-  INSTRUÇÕES:
-  - Use 3-6 passos conforme necessário
-  - Seja claro e educativo
-  - Mantenha consistência no formato
-
-  FORMATO:
-  PASSO 1: [Título claro do primeiro passo]
-  Explicação: [Explique o que fazer e por quê]
-  Cálculo: [Mostre a operação matemática]
-  Resultado: [Resultado deste passo]
-
-  PASSO 2: [Título claro do segundo passo]
-  Explicação: [Explique o que fazer e por quê]
-  Cálculo: [Mostre a operação matemática]
-  Resultado: [Resultado deste passo]
-
-  [Continue conforme necessário]
+  PASSO 2: Segundo Passo  
+  Explicação: O que fazer neste passo
+  Cálculo: operação matemática
+  Resultado: resultado do passo
 
   VERIFICAÇÃO:
-  Explicação: [Substitua o resultado na equação original para confirmar]
-  Cálculo: [Mostre a verificação]
-  Resultado: [Confirmação se está correto]
+  Explicação: Como verificar
+  Cálculo: verificação
+  Resultado: confirmação
 
-  RESPOSTA FINAL: [Destaque a resposta de forma clara]
+  RESPOSTA FINAL: resposta destacada
 
-  IMPORTANTE: Use EXATAMENTE os rótulos "PASSO X:", "Explicação:", "Cálculo:", "Resultado:"`;
+  IMPORTANTE: Substitua os colchetes pelos valores reais, não copie o formato!`;
   }
 
   /**
@@ -468,6 +428,91 @@ Use linguagem clara e didática para estudantes.`;
     
     // Padrão: médio
     return 'medium';
+  }
+
+  /**
+   * Validar se a resposta está no formato estruturado esperado
+   */
+  isValidStructuredResponse(responseText) {
+    const text = responseText.trim();
+    
+    // Verificações essenciais
+    const hasSteps = /PASSO \d+:/i.test(text);
+    const hasExplanation = /Explicação:/i.test(text);
+    const hasCalculation = /Cálculo:/i.test(text);
+    const hasResult = /Resultado:/i.test(text);
+    const hasFinalAnswer = /RESPOSTA FINAL:/i.test(text);
+    
+    // Pelo menos deve ter passos e resposta final
+    return hasSteps && hasFinalAnswer && hasExplanation;
+  }
+
+  /**
+   * Criar prompt mais rígido para retry
+   */
+  createStrictMathPrompt(problem) {
+    return `Você é um professor de matemática. Resolva EXATAMENTE neste formato:
+
+  PROBLEMA: "${problem}"
+
+  PASSO 1: [título do passo]
+  Explicação: [explicação clara]
+  Cálculo: [operação matemática]
+  Resultado: [resultado numérico]
+
+  VERIFICAÇÃO:
+  Explicação: [como verificar]
+  Cálculo: [verificação]
+  Resultado: [confirmação]
+
+  RESPOSTA FINAL: [resposta destacada]
+
+  OBRIGATÓRIO: Use EXATAMENTE as palavras "PASSO", "Explicação:", "Cálculo:", "Resultado:", "VERIFICAÇÃO:", "RESPOSTA FINAL:".
+  NÃO mude o formato. NÃO use outros rótulos.`;
+  }
+
+  /**
+   * Explicar problema com retry automático se formato inválido
+   */
+  async explainMathWithRetry(problem, abortSignal = null) {
+    try {
+      // Primeira tentativa - prompt normal
+      console.log('🎯 Primeira tentativa...');
+      const prompt = this.createMathPrompt(problem);
+      const result = await this.generate(prompt, null, {}, abortSignal);
+      
+      // Validar formato
+      if (this.isValidStructuredResponse(result.response)) {
+        console.log('✅ Formato válido na primeira tentativa');
+        return result;
+      }
+      
+      // Segunda tentativa - prompt mais rígido
+      console.log('⚠️ Formato inválido, tentando prompt mais rígido...');
+      const strictPrompt = this.createStrictMathPrompt(problem);
+      const retryResult = await this.generate(strictPrompt, null, { temperature: 0.1 }, abortSignal);
+      
+      // Validar segunda tentativa
+      if (this.isValidStructuredResponse(retryResult.response)) {
+        console.log('✅ Formato válido na segunda tentativa');
+        return retryResult;
+      }
+      
+      // Terceira tentativa - fallback simples
+      console.log('❌ Duas tentativas falharam, usando fallback...');
+      const fallbackResult = await this.explainMathAnswerOnly(problem, abortSignal);
+      
+      return {
+        response: `Não consegui formatar a resposta corretamente. Aqui está a resposta direta:\n\nRESPOSTA FINAL: ${fallbackResult.response}`,
+        elapsedTime: result.elapsedTime + retryResult.elapsedTime + fallbackResult.elapsedTime,
+        model: this.model,
+        wasRetried: true
+      };
+      
+    } catch (error) {
+      console.error('❌ Erro no explainMathWithRetry:', error.message);
+      throw error;
+    }
   }
 
 }
