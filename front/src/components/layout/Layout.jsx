@@ -8,6 +8,7 @@ import useBackground from '../../hooks/useBackground'
 import SettingsModal from '../ui/SettingsModal'
 import AISphere from '../ui/AISphere'
 import DeleteCollectionModal from '../ui/DeleteCollectionModal'
+import AboutModal from '../ui/AboutModal'
 
 const Layout = ({ 
   children, 
@@ -35,7 +36,7 @@ const Layout = ({
   const { backgroundType, changeBackground } = useBackground()
 
   const [showSettingsModal, setShowSettingsModal] = useState(false)
-
+  const [showAboutModal, setShowAboutModal] = useState(false)
   const [deleteCollectionModal, setDeleteCollectionModal] = useState({
   isOpen: false,
   collection: null,
@@ -259,8 +260,22 @@ const Layout = ({
           {children}
         </main>
 
-        <footer className="fixed bottom-0 left-0 right-0 py-3 text-center text-gray-400 text-xs bg-white/70 backdrop-blur-sm border-t border-white/30 z-10">
-          <p>ExplicaAI - Projeto Social para Educação Matemática Offline</p>
+        <footer className="fixed bottom-0 left-0 right-0 text-center z-10">
+          <div className="w-full bg-black/20 backdrop-blur-md border-t border-white/10 px-6 py-3 shadow-lg">
+            <p className="text-white/80 text-sm font-medium">
+              ExplicaAI - Projeto Social para Educação Matemática Offline
+            </p>
+            <p className="text-white/60 text-xs mt-1">
+              Desenvolvido por{' '}
+              <button
+                onClick={() => setShowAboutModal(true)}
+                className="text-white/80 hover:text-white underline hover:no-underline transition-colors duration-200 font-medium"
+              >
+                fscpinheiro
+              </button>
+              {' '}• Gemma 3n Impact Challenge
+            </p>
+          </div>
         </footer>
       </div>
 
@@ -537,10 +552,11 @@ const Layout = ({
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
           onOpenBackgroundSelector={() => setShowBackgroundSelector(true)}
+          onOpenAbout={() => setShowAboutModal(true)}
           showExamples={showExamples}
           onToggleExamples={onToggleExamples}
         />
-      {/* ✅ MODAL DE SELEÇÃO DE FUNDO */}
+      {/*MODAL DE SELEÇÃO DE FUNDO */}
       <BackgroundSelector
         isOpen={showBackgroundSelector}
         onClose={() => setShowBackgroundSelector(false)}
@@ -555,6 +571,10 @@ const Layout = ({
         onCancel={cancelDeleteCollection}
         collection={deleteCollectionModal.collection}
         isLoading={deleteCollectionModal.isLoading}
+      />
+      <AboutModal
+        isOpen={showAboutModal}
+        onClose={() => setShowAboutModal(false)}
       />
     </BackgroundManager>
   )

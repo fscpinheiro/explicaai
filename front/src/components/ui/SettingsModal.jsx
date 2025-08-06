@@ -1,10 +1,11 @@
-import { X, Palette, Eye, EyeOff, HelpCircle } from 'lucide-react'
+import { X, Palette, Eye, EyeOff, HelpCircle, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const SettingsModal = ({ 
   isOpen, 
   onClose, 
   onOpenBackgroundSelector,
+  onOpenAbout,
   showExamples,
   onToggleExamples
 }) => {
@@ -25,6 +26,16 @@ const SettingsModal = ({
       description: showExamples ? 'Esconder exemplos rotativos' : 'Exibir exemplos de problemas',
       icon: showExamples ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />,
       action: onToggleExamples
+    },
+    {
+      id: 'about',
+      name: 'Sobre Mim',
+      description: 'Informações do desenvolvedor e contatos',
+      icon: <User className="w-6 h-6" />,
+      action: () => {
+        onOpenAbout()
+        onClose()
+      }
     }
   ]
 
