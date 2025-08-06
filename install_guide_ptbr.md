@@ -206,7 +206,12 @@ ollama serve
 **Terminal 2 - ExplicaAI Application:**
 ```bash
 # Na pasta raiz do projeto
+# Terminal 2 - Backend (ExplicaAI API)
 npm start
+
+# Terminal 3 - Frontend (Interface Web)
+cd front
+npm run dev
 ```
 
 ### Verificação Completa do Sistema

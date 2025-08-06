@@ -86,9 +86,31 @@ npm run init-db
 # Start Ollama service (separate terminal)
 ollama serve
 
-# Start application
+# Start backend (terminal 2)
 npm start
+
+# Start frontend (terminal 3)
+cd front
+npm run dev
 ```
+## Development Structure
+
+ExplicaAI follows a monorepo structure:
+explicaai/
+├── server.js              # Backend entry point
+├── package.json           # Backend dependencies
+├── routes/                # API routes
+├── services/              # Backend services
+├── front/                 # Frontend application
+│   ├── package.json       # Frontend dependencies
+│   ├── src/               # React components
+│   └── public/            # Static assets
+└── database/              # SQLite database
+
+**Running the application requires three terminals:**
+1. **Ollama Service:** `ollama serve`
+2. **Backend API:** `npm start` (root folder)
+3. **Frontend:** `npm run dev` (front folder)
 
 ### Prerequisites
 
